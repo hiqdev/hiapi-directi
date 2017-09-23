@@ -12,7 +12,7 @@ return [
     'container' => [
         'definitions' => [
             'directi-tool' => [
-                'class' => \hiapi\directi\tools\DirectiTool::class,
+                'class' => \hiapi\directi\DirectiTool::class,
             ],
         ],
     ],
