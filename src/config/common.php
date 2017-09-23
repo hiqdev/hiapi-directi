@@ -1,9 +1,9 @@
 <?php
 /**
- * hiAPI GoGetSSL plugin
+ * hiAPI Directi plugin
  *
- * @link      https://github.com/hiqdev/hiapi-gogetssl
- * @package   hiapi-gogetssl
+ * @link      https://github.com/hiqdev/hiapi-directi
+ * @package   hiapi-directi
  * @license   BSD-3-Clause
  * @copyright Copyright (c) 2017, HiQDev (http://hiqdev.com/)
  */

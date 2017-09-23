@@ -1,6 +1,6 @@
 # hiAPI Directi
 
-**hiAPI Directi**
+**hiAPI Directi plugin**
 
 [![Latest Stable Version](https://poser.pugx.org/hiqdev/hiapi-directi/v/stable)](https://packagist.org/packages/hiqdev/hiapi-directi)
 [![Total Downloads](https://poser.pugx.org/hiqdev/hiapi-directi/downloads)](https://packagist.org/packages/hiqdev/hiapi-directi)

@@ -1,7 +1,7 @@
 {
     "name": "hiqdev/hiapi-directi",
     "type": "yii2-extension",
-    "description": "hiAPI Directi",
+    "description": "hiAPI Directi plugin",
     "keywords": [
         "hiapi",
         "hipanel",

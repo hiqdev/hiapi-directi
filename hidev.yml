@@ -1,7 +1,7 @@
 package:
     type:           yii2-extension
     name:           hiapi-directi
-    title:          hiAPI Directi
+    title:          hiAPI Directi plugin
     headline:       hiAPI Directi
     keywords:       hiapi, hipanel, directi, registrar, domains
     description:    |
