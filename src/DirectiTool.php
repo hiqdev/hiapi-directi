@@ -200,6 +200,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainRegister($row)
     {
+        d($row);
         if (!$row['nss']) {
             $row['nss'] = arr::get($this->base->domainGetNSs($row),'nss');
         }
