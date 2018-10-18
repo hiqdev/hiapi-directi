@@ -33,6 +33,8 @@ class DirectiTool extends \hiapi\components\AbstractTool
     protected $password;
     protected $customer_id;
 
+    protected $web;
+
     public function __construct($base, $data)
     {
         parent::__construct($base, $data);
@@ -75,13 +77,21 @@ class DirectiTool extends \hiapi\components\AbstractTool
         $add_data['auth-userid']    = $this->login;
         $add_data['api-key']        = $this->password;
 
-        $web = new apiWebTool();
-        $res = $web->checkedRequest($name . '.json',$data,$method,$inputs,null,$add_data);
+        $res = $this->getWeb()->checkedRequest($name . '.json',$data,$method,$inputs,null,$add_data);
         if ($res['status'] === 'ERROR') {
             return error('directi error',$res);
         }
 
         return $returns ? fix::values($returns,$res) : $res;
+    }
+
+    protected function getWeb()
+    {
+        if ($this->web === null) {
+            $this->web = new apiWebTool();
+        }
+
+        return $this->web;
     }
 
     public function call_orderid($name,$data,$method,$inputs=null,$returns=null)
