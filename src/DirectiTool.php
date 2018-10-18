@@ -10,6 +10,13 @@
 
 namespace hiapi\directi;
 
+use arr;
+use err;
+use fix;
+use check;
+use retrieve;
+use apiWebTool;
+
 /**
  * GoGetSSL certificate tool.
  *
@@ -21,6 +28,22 @@ namespace hiapi\directi;
  */
 class DirectiTool extends \hiapi\components\AbstractTool
 {
+    protected $url;
+    protected $login;
+    protected $password;
+    protected $customer_id;
+
+    public function __construct($base, $data)
+    {
+        parent::__construct($base, $data);
+        foreach (['url','login','password','customer_id'] as $key) {
+            if (empty($data[$key])) {
+                throw new \Exception("`$key` must be given for DirectiTool");
+            }
+            $this->{$key} = $data[$key];
+        }
+    }
+
     public function getPlain($url,$data=null,$method='',$options = [])
     {
         $url .= '?';
@@ -51,7 +74,9 @@ class DirectiTool extends \hiapi\components\AbstractTool
         }
         $add_data['auth-userid']    = $this->login;
         $add_data['api-key']        = $this->password;
-        $res = $this->checkedRequest($name . '.json',$data,$method,$inputs,null,$add_data);
+
+        $web = new apiWebTool();
+        $res = $web->checkedRequest($name . '.json',$data,$method,$inputs,null,$add_data);
         if ($res['status'] === 'ERROR') {
             return error('directi error',$res);
         }
