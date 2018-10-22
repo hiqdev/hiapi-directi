@@ -340,23 +340,27 @@ class DirectiTool extends \hiapi\components\AbstractTool
     public function contactSet($row)
     {
         $info = $this->contactGetId($row);
-        $row['id'] = $info['id'];
+        $row['id'] = $info['id'] ?? null;
 
-        return (err::is($info) || !$info['id']) ? $this->contactCreate($row) : $this->contactUpdate($row);
+        return (err::is($info) || empty($info['id'])) ? $this->contactCreate($row) : $this->contactUpdate($row);
     }
 
     public function contactGetId($row)
     {
-        $data = $this->call('contacts/search',$row,'GET',[
+        $data = $this->get('contacts/search',$row,[
             'name'              => 'label',
             'email'             => 'email',
         ],[],[
-            'customer-id'           => $this->customer_id,
-            'no-of-records'         => 10,
+            'customer-id'       => $this->customer_id,
+            'no-of-records'     => 10,
             'page-no'           => 1,
         ]);
 
-        return err::is($data) ? $data : ['id'=>$data['result'][0]['entity.entityid']];
+        if (err::is($data) || empty($data['result'][0]['entity.entityid'])) {
+            return $data;
+        }
+
+        return ['id'=>$data['result'][0]['entity.entityid']];
     }
 
     public function contactCreate($row)
