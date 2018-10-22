@@ -89,7 +89,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     protected function getWeb()
     {
         if ($this->web === null) {
-            $this->web = new apiWebTool();
+            $this->web = new apiWebTool($this->base, ['url' => rtrim($this->url, '/') . '/api/']);
         }
 
         return $this->web;
