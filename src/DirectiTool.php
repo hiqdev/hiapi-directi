@@ -32,6 +32,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     protected $login;
     protected $password;
     protected $customer_id;
+    protected $default_nss = ['ns1.topdns.me', 'ns2.topdns.me'];
 
     protected $web;
 
@@ -177,10 +178,13 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainPrepareContacts($row)
     {
-        $contacts = $this->base->domainGetWPContactsInfo($row);
+        /// XXX think of later?
+        /// $contacts = $this->base->domainGetWPContactsInfo($row);
+        $contacts = $this->base->domainGetContactsInfo($row);
         if (err::is($contacts)) {
             return $contacts;
         }
+        $rids = [];
         foreach ($this->base->getContactTypes() as $t) {
             $cid = $contacts[$t]['id'];
             $remoteid = $rids[$cid];
@@ -200,14 +204,14 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainRegister($row)
     {
-        d($row);
         if (!$row['nss']) {
             $row['nss'] = arr::get($this->base->domainGetNSs($row),'nss');
         }
         if (!$row['nss']) {
-            $row['nss'] = ['ns1.topdns.me', 'ns2.topdns.me'];
+            $row['nss'] = $this->default_nss;
         }
         $row = $this->domainPrepareContacts($row);
+    d($row);
         if (err::is($row)) {
             return $row;
         }
