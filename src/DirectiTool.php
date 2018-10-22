@@ -70,6 +70,16 @@ class DirectiTool extends \hiapi\components\AbstractTool
         }
     }
 
+    public function get($name, $data, $inputs = null, $returns = null, $add_data = [])
+    {
+        return $this->call($name, $data, 'GET', $inputs, $returns, $add_data);
+    }
+
+    public function post($name, $data, $inputs = null, $returns = null, $add_data = [])
+    {
+        return $this->call($name, $data, 'POST', $inputs, $returns, $add_data);
+    }
+
     public function call($name,$data,$method,$inputs=null,$returns=null,$add_data=[])
     {
         if (err::is($data)) {
