@@ -373,9 +373,9 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function contactCreate($row)
     {
-        $id = $this->call('contacts/add',$this->contactPrepare($row),'POST',null,null,[
+        $id = $this->post('contacts/add', $this->contactPrepare($row), null, null, [
             'type'              => 'Contact',
-            'customer-id'           => $this->customer_id,
+            'customer-id'       => $this->customer_id,
         ]);
 
         return compact('id');
