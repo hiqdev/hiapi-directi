@@ -178,9 +178,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainPrepareContacts($row)
     {
-        /// XXX think of later?
-        /// $contacts = $this->base->domainGetWPContactsInfo($row);
-        $contacts = $this->base->domainGetContactsInfo($row);
+        $contacts = $this->base->domainGetWPContactsInfo($row);
         if (err::is($contacts)) {
             return $contacts;
         }
