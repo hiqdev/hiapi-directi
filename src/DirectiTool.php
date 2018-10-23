@@ -16,6 +16,7 @@ use fix;
 use check;
 use retrieve;
 use apiWebTool;
+use GuzzleHttp\Client;
 
 /**
  * GoGetSSL certificate tool.
@@ -34,7 +35,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     protected $customer_id;
     protected $default_nss = ['ns1.topdns.me', 'ns2.topdns.me'];
 
-    protected $web;
+    protected $httpClient;
 
     public function __construct($base, $data)
     {
@@ -80,7 +81,8 @@ class DirectiTool extends \hiapi\components\AbstractTool
         return $this->call($name, $data, 'POST', $inputs, $returns, $add_data);
     }
 
-    public function call($name,$data,$method,$inputs=null,$returns=null,$add_data=[])
+    /// XXX: DEPRECATED
+    public function call($method,$name,$data,$inputs=null,$returns=null,$add_data=[])
     {
         if (err::is($data)) {
             return $data;
@@ -88,7 +90,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
         $add_data['auth-userid']    = $this->login;
         $add_data['api-key']        = $this->password;
 
-        $res = $this->getWeb()->checkedRequest($name . '.json',$data,$method,$inputs,null,$add_data);
+        $res = $this->getHttpClient()->checkedRequest($method, $name . '.json',$data,$inputs,null,$add_data);
         if ($res['status'] === 'ERROR') {
             return error('directi error',$res);
         }
@@ -96,23 +98,24 @@ class DirectiTool extends \hiapi\components\AbstractTool
         return $returns ? fix::values($returns,$res) : $res;
     }
 
-    protected function getWeb()
+    protected function getHttpClient()
     {
-        if ($this->web === null) {
-            $this->web = new apiWebTool($this->base, ['url' => rtrim($this->url, '/') . '/api/']);
+        if ($this->httpClient === null) {
+            $guzzle = new Client();
+            $this->httpClient = new HttpClient(rtrim($this->url, '/') . '/api/');
         }
 
-        return $this->web;
+        return $this->httpClient;
     }
 
-    public function call_orderid($name,$data,$method,$inputs=null,$returns=null)
+    public function post_orderid($method,$name,$data,$inputs=null,$returns=null)
     {
         $res = $this->domainGetId($data);
         if (err::is($res)) {
             return $res;
         }
 
-        return $this->call($name,$data,$method,$inputs,$returns,['order-id'=>$res['id']]);
+        return $this->call($method,$name,$data,$inputs,$returns,['order-id'=>$res['id']]);
     }
 
     /// domain maintenance
@@ -124,7 +127,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     /// domain
     public function domainGetId($row)
     {
-        $id = $this->call('domains/orderid',$row,'GET',[
+        $id = $this->get('domains/orderid',$row,[
             'domain->domain-name'       => 'domain,*',
         ]);
 
@@ -141,10 +144,10 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function _domainInfo($row)
     {
-        $data = $this->call('domains/details-by-name',[
+        $data = $this->get('domains/details-by-name',[
             'domain-name'           => $row['domain'],
             'options'           => ['OrderDetails', 'NsDetails', 'ContactIds'],
-        ],'GET');
+        ]);
         $res = fix::values([
             'orderid->id'           => 'id',
             'domainname->domain'        => 'domain',
@@ -223,7 +226,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
         if (err::is($row)) {
             return $row;
         }
-        $res = $this->call('domains/register',$row,'POST',[
+        $res = $this->post('domains/register',$row,[
             'domain->domain-name'           => 'domain',
             'period->years'             => 'period',
             'nss->ns'               => 'nss',
@@ -246,7 +249,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     public function domainTransfer($row)
     {
         $row = $this->domainPrepareContacts($row);
-        $res = $this->call('domains/transfer',$row,'POST',[
+        $res = $this->post('domains/transfer',$row,[
             'domain->domain-name'           => 'domain',
             'password->auth-code'           => 'password',
             'nss->ns'               => 'nss',
@@ -272,14 +275,14 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainSetNSs($row)
     {
-        return $this->call_orderid('domains/modify-ns',$row,'POST',[
+        return $this->post_orderid('domains/modify-ns',$row,[
             'nss->ns'           => 'nss',
         ]);
     }
 
     public function domainSetContacts($row)
     {
-        $res = $this->call_orderid('domains/modify-contact',$row,'POST',[
+        $res = $this->post_orderid('domains/modify-contact',$row,[
             'registrant_remoteid->reg-contact-id'   => 'id',
             'admin_remoteid->admin-contact-id'  => 'id',
             'tech_remoteid->tech-contact-id'    => 'id',
@@ -297,7 +300,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainEnableLock($row)
     {
-        return $this->call_orderid('domains/enable-theft-protection',$row,'POST');
+        return $this->post_orderid('domains/enable-theft-protection',$row);
     }
 
     public function domainsEnableLock($row)
@@ -311,7 +314,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainDisableLock($row)
     {
-        return $this->call_orderid('domains/disable-theft-protection',$row,'POST');
+        return $this->post_orderid('domains/disable-theft-protection',$row);
     }
 
     public function domainsDisableLock($rows)
@@ -325,7 +328,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function domainSetPassword($row)
     {
-        return $this->call_orderid('domains/modify-auth-code',$row,'POST',[
+        return $this->post_orderid('domains/modify-auth-code',$row,[
             'password->auth-code'       => 'password',
         ]);
     }
@@ -383,7 +386,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function contactUpdate($row)
     {
-        return $this->call('contacts/modify',$this->contactPrepare($row),'POST',null,[
+        return $this->post('contacts/modify',$this->contactPrepare($row),null,[
             'entityid->id'          => 'id',
         ],[
             'customer-id'           => $this->customer_id,
@@ -434,7 +437,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
 
     public function hostCreate($row)
     {
-        return $this->call_orderid('domains/add-cns',$row,'POST',[
+        return $this->post_orderid('domains/add-cns',$row,[
             'host->cns'         => 'ns',
             'ips->ip'           => 'ips',
         ]);
