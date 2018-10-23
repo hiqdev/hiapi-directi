@@ -4,6 +4,7 @@ namespace hiapi\directi;
 
 use err;
 use check;
+use fix;
 use GuzzleHttp\Client;
 
 class HttpClient
@@ -19,18 +20,21 @@ class HttpClient
     }
 
     public function checkedRequest (
-        string  $method='',
+        string  $method,
         string  $name,
         array   $data,
         array   $inputs=null,
         array   $returns=null,
         array   $add_data=null
     ) {
-        $data = $inputs ? check::values($inputs,$data) : $data;
-        if (err::is($data)) return $data;
-        if ($add_data) $data = array_merge($data,$add_data);
-        $res = $this->request($method,$name,$data);
-        if (err::is($res)) return $res;
+        $data = $inputs ? check::values($inputs, $data) : $data;
+        if (err::is($data))
+            return $data;
+        if ($add_data)
+            $data = array_merge($data, $add_data);
+        $res = $this->request($method, $name, $data);
+        if (err::is($res))
+            return $res;
         return $returns ? fix::values($returns,$res) : $res;
     }
 
@@ -42,15 +46,16 @@ class HttpClient
         return json_decode($this->getPlain($url, $data, $method), true);
     }
 
-    public function getPlain (string $method='', string $url, array $data=null)
+    public function getPlain (string $method, string $url, array $data=null)
     {
         if (isset($data[''])) {
             $tmp = $data[''];
             unset($data['']);
             array_push($data,$tmp);
         }
-        if (!$method) $method = $this->method ?: 'post';
-        $fetchMethod = "fetch$method";
+        if (!$method)
+            $method = $this->method ?: 'post';
+        $fetchMethod = "fetch{$method}";
 
         return trim(static::$fetchMethod($url, $data));
     }

@@ -58,8 +58,9 @@ class DirectiTool extends \hiapi\components\AbstractTool
         return parent::getPlain($url,null,$method);
     }
 
-    public static function _prepareVar($k,$v)
+    public static function _prepareVar($k, $v)
     {
+        $res = '';
         if (is_array($v)) {
             foreach ($v as $w) {
                 $res .= static::_prepareVar($k,$w);
@@ -71,26 +72,84 @@ class DirectiTool extends \hiapi\components\AbstractTool
         }
     }
 
-    public function get($name, $data, $inputs = null, $returns = null, $add_data = [])
+
+    /**
+     * Performs http GET request
+     *
+     * @param string $command
+     * @param array $data
+     * @param array|null $inputs
+     * @param array|null $returns
+     * @param array|null $auxData
+     * @return array
+     */
+    public function get(
+        string $command,
+        array $data,
+        array $inputs=null,
+        array $returns=null,
+        array $auxData=null
+    )
     {
-        return $this->call($name, $data, 'GET', $inputs, $returns, $add_data);
+        return $this->call('GET', $command, $data, $inputs, $returns, $auxData);
     }
 
-    public function post($name, $data, $inputs = null, $returns = null, $add_data = [])
+    /**
+     * Performs http POST request
+     *
+     * @param string $command
+     * @param array $data
+     * @param array|null $inputs
+     * @param array|null $returns
+     * @param array|null $auxData
+     * @return array
+     */
+    public function post(
+        string $command,
+        array $data,
+        array $inputs=null,
+        array $returns=null,
+        array $auxData=null
+    )
     {
-        return $this->call($name, $data, 'POST', $inputs, $returns, $add_data);
+        return $this->call('POST', $command, $data, $inputs, $returns, $auxData);
     }
 
-    /// XXX: DEPRECATED
-    public function call($method,$name,$data,$inputs=null,$returns=null,$add_data=[])
+
+    /**
+     * Performs http request with specified method
+     * Direct usage is deprecated
+     *
+     * @param string $httpMethod
+     * @param string $command
+     * @param array $data
+     * @param array|null $inputs
+     * @param array|null $returns
+     * @param array|null $auxData
+     * @return array
+     */
+    public function call(
+        string $httpMethod,
+        string $command,
+        array $data,
+        array $inputs=null,
+        array $returns=null,
+        array $auxData=null
+    )
     {
         if (err::is($data)) {
             return $data;
         }
-        $add_data['auth-userid']    = $this->login;
-        $add_data['api-key']        = $this->password;
-
-        $res = $this->getHttpClient()->checkedRequest($method, $name . '.json',$data,$inputs,null,$add_data);
+        $auxData['auth-userid']    = $this->login;
+        $auxData['api-key']        = $this->password;
+        $res = $this->getHttpClient()->checkedRequest(
+            $httpMethod,
+            $command . '.json',
+            $data ,
+            $inputs,
+            null,
+            $auxData
+        );
         if ($res['status'] === 'ERROR') {
             return error('directi error',$res);
         }
@@ -102,7 +161,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     {
         if ($this->httpClient === null) {
             $guzzle = new Client();
-            $this->httpClient = new HttpClient(rtrim($this->url, '/') . '/api/');
+            $this->httpClient = new HttpClient($guzzle);
         }
 
         return $this->httpClient;
@@ -226,21 +285,21 @@ class DirectiTool extends \hiapi\components\AbstractTool
         if (err::is($row)) {
             return $row;
         }
-        $res = $this->post('domains/register',$row,[
-            'domain->domain-name'           => 'domain',
-            'period->years'             => 'period',
-            'nss->ns'               => 'nss',
+        $res = $this->post('domains/register', $row , [
+            'domain->domain-name'                   => 'domain',
+            'period->years'                         => 'period',
+            'nss->ns'                               => 'nss',
             'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'  => 'id',
-            'tech_remoteid->tech-contact-id'    => 'id',
+            'admin_remoteid->admin-contact-id'      => 'id',
+            'tech_remoteid->tech-contact-id'        => 'id',
             'billing_remoteid->billing-contact-id'  => 'id',
         ],[
-            'entityid->id'              => 'id',
-            'description->domain'           => 'domain',
+            'entityid->id'          => 'id',
+            'description->domain'   => 'domain',
         ],[
-            'customer-id'               => $this->customer_id,
-            'invoice-option'            => 'NoInvoice',
-            'protect-privacy'           => 'false',
+            'customer-id'       => $this->customer_id,
+            'invoice-option'    => 'NoInvoice',
+            'protect-privacy'   => 'false',
         ]);
 
         return $res;
@@ -303,7 +362,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
         return $this->post_orderid('domains/enable-theft-protection',$row);
     }
 
-    public function domainsEnableLock($row)
+    public function domainsEnableLock($rows)
     {
         foreach ($rows as $k=>$row) {
             $res[$k] = $this->domainEnableLock($row);
