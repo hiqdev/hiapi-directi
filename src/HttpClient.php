@@ -6,6 +6,7 @@ use err;
 use check;
 use fix;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
 
 class HttpClient
 {
@@ -19,54 +20,94 @@ class HttpClient
         $this->client = $client;
     }
 
-    public function checkedRequest (
-        string  $method,
-        string  $name,
+    public function performRequest (
+        string  $httpMethod,
+        string  $command,
         array   $data,
         array   $inputs=null,
         array   $returns=null,
-        array   $add_data=null
+        array   $auxData=null
     ) {
         $data = $inputs ? check::values($inputs, $data) : $data;
-        if (err::is($data))
+        if (err::is($data)) {
             return $data;
-        if ($add_data)
-            $data = array_merge($data, $add_data);
-        $res = $this->request($method, $name, $data);
-        if (err::is($res))
-            return $res;
-        return $returns ? fix::values($returns,$res) : $res;
-    }
-
-    public function request (string $method, string $name, array $data) {
-        return err::setifnot($this->getJSON($method, $name, $data), 'unknown error');
-    }
-
-    public function getJSON (string $method,string $url,array $data=null) {
-        return json_decode($this->getPlain($url, $data, $method), true);
-    }
-
-    public function getPlain (string $method, string $url, array $data=null)
-    {
-        if (isset($data[''])) {
-            $tmp = $data[''];
-            unset($data['']);
-            array_push($data,$tmp);
         }
-        if (!$method)
-            $method = $this->method ?: 'post';
-        $fetchMethod = "fetch{$method}";
-
-        return trim(static::$fetchMethod($url, $data));
+        if ($auxData) {
+            $data = array_merge($data, $auxData);
+        }
+        $guzzleResponse = $this->request($httpMethod, $command, $data);
+        $response = $this->parseGuzzleResponse($guzzleResponse);
+        if (err::is($response)) {
+            return $response;
+        }
+        return $returns ? fix::values($returns, $response) : $response;
     }
 
-    static public function fetchGet (string $url, array $data=null)
+    /**
+     * @param array $data
+     * @return string
+     */
+    private function prepareQuery(array $data): string
     {
+        return preg_replace('/%5B[0-9]+%5D/simU', '', http_build_query($data));
+    }
+
+    private function request (string $httpMethod, $command, $data)
+    {
+        if (!strcasecmp($httpMethod, 'GET')) {
+            return $this->fetchGet($command, $data);
+        }
+        else if (!strcasecmp($httpMethod, 'POST')) {
+            return $this->fetchPost($command, $data);
+        }
+        return null;
+        //return err::setifnot($this->getJSON($method, $name, $data), 'unknown error');
+    }
+
+    /**
+     * @param $guzzleResponse
+     * @return array|int
+     */
+    private function parseGuzzleResponse($guzzleResponse)
+    {
+        $responseLength = $guzzleResponse->getHeader('Content-Length')[0];
+        $response = $guzzleResponse->getBody()->read($responseLength);
+        $response = json_decode($response, true);
+        if (is_array($response) && array_key_exists('error', $response)) {
+            $response['_error'] = $response['error'];
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string $command
+     * @param array $data
+     * @return Response
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function fetchGet (string $command, array $data): Response
+    {
+        $query = $this->prepareQuery($data);
+        return $this->client->request('GET', $command . '?' . $query);
 
     }
 
-    static public function fetchPost (string $url, array $data=null)
+    /**
+     * @param string $command
+     * @param array|null $data
+     * @return Response
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function fetchPost (string $command, array $data=null): Response
     {
-
+        $query = $this->prepareQuery($data);
+        $res = $this->client->request('POST',  $command, [
+            'body' => $query,
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ]
+        ]);
+        return $res;
     }
 };

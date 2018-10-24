@@ -16,7 +16,6 @@ use fix;
 use check;
 use retrieve;
 use apiWebTool;
-use GuzzleHttp\Client;
 
 /**
  * GoGetSSL certificate tool.
@@ -29,13 +28,15 @@ use GuzzleHttp\Client;
  */
 class DirectiTool extends \hiapi\components\AbstractTool
 {
+    private $baseUri = 'https://test.httpapi.com/api/';
+
     protected $url;
     protected $login;
     protected $password;
     protected $customer_id;
     protected $default_nss = ['ns1.topdns.me', 'ns2.topdns.me'];
 
-    protected $httpClient;
+    protected $httpClient = null;
 
     public function __construct($base, $data)
     {
@@ -47,31 +48,6 @@ class DirectiTool extends \hiapi\components\AbstractTool
             $this->{$key} = $data[$key];
         }
     }
-
-    public function getPlain($url,$data=null,$method='',$options = [])
-    {
-        $url .= '?';
-        foreach ($data as $k => $v) {
-            $url .= static::_prepareVar($k,$v);
-        }
-
-        return parent::getPlain($url,null,$method);
-    }
-
-    public static function _prepareVar($k, $v)
-    {
-        $res = '';
-        if (is_array($v)) {
-            foreach ($v as $w) {
-                $res .= static::_prepareVar($k,$w);
-            }
-
-            return $res;
-        } else {
-            return $k . '=' . urlencode($v) . '&';
-        }
-    }
-
 
     /**
      * Performs http GET request
@@ -89,8 +65,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
         array $inputs=null,
         array $returns=null,
         array $auxData=null
-    )
-    {
+    ) {
         return $this->call('GET', $command, $data, $inputs, $returns, $auxData);
     }
 
@@ -110,8 +85,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
         array $inputs=null,
         array $returns=null,
         array $auxData=null
-    )
-    {
+    ) {
         return $this->call('POST', $command, $data, $inputs, $returns, $auxData);
     }
 
@@ -135,14 +109,14 @@ class DirectiTool extends \hiapi\components\AbstractTool
         array $inputs=null,
         array $returns=null,
         array $auxData=null
-    )
-    {
+    ) {
         if (err::is($data)) {
             return $data;
         }
-        $auxData['auth-userid']    = $this->login;
-        $auxData['api-key']        = $this->password;
-        $res = $this->getHttpClient()->checkedRequest(
+        $auxData['auth-userid'] = $this->login;
+        $auxData['api-key']     = $this->password;
+
+        $res = $this->getHttpClient()->performRequest(
             $httpMethod,
             $command . '.json',
             $data ,
@@ -150,20 +124,22 @@ class DirectiTool extends \hiapi\components\AbstractTool
             null,
             $auxData
         );
-        if ($res['status'] === 'ERROR') {
-            return error('directi error',$res);
+        if (array_key_exists('_error', $res)) {
+            return error('directi error', $res);
         }
 
         return $returns ? fix::values($returns,$res) : $res;
     }
 
-    protected function getHttpClient()
+    /**
+     * @return HttpClient
+     */
+    protected function getHttpClient(): HttpClient
     {
         if ($this->httpClient === null) {
-            $guzzle = new Client();
+            $guzzle = new \GuzzleHttp\Client(['base_uri' => $this->baseUri]);
             $this->httpClient = new HttpClient($guzzle);
         }
-
         return $this->httpClient;
     }
 
@@ -281,10 +257,15 @@ class DirectiTool extends \hiapi\components\AbstractTool
             $row['nss'] = $this->default_nss;
         }
         $row = $this->domainPrepareContacts($row);
-    d($row);
+    //d($row);
         if (err::is($row)) {
             return $row;
         }
+//        $row['registrant_remoteid'] = 79938072;
+//        $row['admin_remoteid'] = 79938072;
+//        $row['tech_remoteid'] = 79938072;
+//        $row['billing_remoteid'] = 79938072;
+
         $res = $this->post('domains/register', $row , [
             'domain->domain-name'                   => 'domain',
             'period->years'                         => 'period',
@@ -293,12 +274,13 @@ class DirectiTool extends \hiapi\components\AbstractTool
             'admin_remoteid->admin-contact-id'      => 'id',
             'tech_remoteid->tech-contact-id'        => 'id',
             'billing_remoteid->billing-contact-id'  => 'id',
+
         ],[
             'entityid->id'          => 'id',
             'description->domain'   => 'domain',
         ],[
             'customer-id'       => $this->customer_id,
-            'invoice-option'    => 'NoInvoice',
+            'invoice-option'    => 'KeepInvoice',
             'protect-privacy'   => 'false',
         ]);
 
