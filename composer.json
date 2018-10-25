@@ -44,9 +44,13 @@
             "homepage": "http://hiqdev.com/"
         }
     ],
+    "require": {
+        "hiqdev/hiapi-legacy": "dev-master"
+    },
     "require-dev": {
         "hiqdev/hidev-php": "<2.0 || dev-master",
-        "hiqdev/hidev-hiqdev": "<2.0 || dev-master"
+        "hiqdev/hidev-hiqdev": "<2.0 || dev-master",
+        "phpunit/phpunit": "^6.0"
     },
     "autoload": {
         "psr-4": {
@@ -64,10 +68,15 @@
             "params": "src/config/params.php"
         }
     },
+    "minimum-stability": "dev",
     "repositories": [
         {
             "type": "composer",
             "url": "https://asset-packagist.org"
+        },
+        {
+            "type": "composer",
+            "url": "https://packagist.hiqdev.com"
         }
     ]
 }
