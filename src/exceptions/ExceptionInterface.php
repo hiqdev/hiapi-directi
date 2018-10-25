@@ -1,6 +1,6 @@
 <?php
 
-namespace hiapi\directi;
+namespace hiapi\directi\exceptions;
 
 /**
  * Common interface for all exceptions thrown by this library.

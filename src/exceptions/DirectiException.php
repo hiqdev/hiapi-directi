@@ -1,6 +1,6 @@
 <?php
 
-namespace hiapi\directi;
+namespace hiapi\directi\exceptions;
 
 /**
  * Thrown when Directi returned error.

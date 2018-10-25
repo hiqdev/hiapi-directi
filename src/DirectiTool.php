@@ -124,9 +124,6 @@ class DirectiTool extends \hiapi\components\AbstractTool
             null,
             $auxData
         );
-        if (array_key_exists('_error', $res)) {
-            return error('directi error', $res);
-        }
 
         return $returns ? fix::values($returns,$res) : $res;
     }
@@ -261,10 +258,6 @@ class DirectiTool extends \hiapi\components\AbstractTool
         if (err::is($row)) {
             return $row;
         }
-//        $row['registrant_remoteid'] = 79938072;
-//        $row['admin_remoteid'] = 79938072;
-//        $row['tech_remoteid'] = 79938072;
-//        $row['billing_remoteid'] = 79938072;
 
         $res = $this->post('domains/register', $row , [
             'domain->domain-name'                   => 'domain',
