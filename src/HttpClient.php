@@ -91,7 +91,6 @@ class HttpClient
     {
         $query = $this->prepareQuery($data);
         return $this->client->request('GET', $command . '?' . $query);
-
     }
 
     /**

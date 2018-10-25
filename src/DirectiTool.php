@@ -408,9 +408,16 @@ class DirectiTool extends \hiapi\components\AbstractTool
         return ['id'=>$data['result'][0]['entity.entityid']];
     }
 
-    public function contactCreate($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function contactCreate(array $row)
     {
-        $id = $this->post('contacts/add', $this->contactPrepare($row), null, null, [
+        $id = $this->post('contacts/add',
+            $this->contactPrepare($row),
+            null,
+            null, [
             'type'              => 'Contact',
             'customer-id'       => $this->customer_id,
         ]);
@@ -445,22 +452,22 @@ class DirectiTool extends \hiapi\components\AbstractTool
         }
 
         return check::values([
-            'id->contact-id'        => 'id',
-            'name'              => 'label',
+            'id->contact-id'            => 'id',
+            'name'                      => 'label',
             'organization->company'     => 'label',
-            'email'             => 'email',
+            'email'                     => 'email',
             'street1->address-line-1'   => 'label',
             'street2->address-line-2'   => 'label',
             'street3->address-line-3'   => 'label',
-            'city'              => 'label',
+            'city'                      => 'label',
             'postal_code->zipcode'      => 'label',
-            'province->state'       => 'label',
-            'country'           => 'ref,uc',
-            'phone-cc'          => 'digits',
-            'phone'             => 'digits',
-            'fax-cc'            => 'digits',
-            'fax'               => 'digits',
-        ],$row);
+            'province->state'           => 'label',
+            'country'                   => 'ref,uc',
+            'phone-cc'                  => 'digits',
+            'phone'                     => 'digits',
+            'fax-cc'                    => 'digits',
+            'fax'                       => 'digits',
+        ], $row);
     }
 
     /// host
