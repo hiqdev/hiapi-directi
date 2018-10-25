@@ -7,6 +7,8 @@ use check;
 use fix;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
+use hiapi\directi\exceptions\DirectiException;
+use hiapi\directi\exceptions\ValidationException;
 
 class HttpClient
 {
@@ -30,17 +32,18 @@ class HttpClient
     ) {
         $data = $inputs ? check::values($inputs, $data) : $data;
         if (err::is($data)) {
-            return $data;
+            throw new ValidationException(err::get($data));
         }
         if ($auxData) {
             $data = array_merge($data, $auxData);
         }
         $guzzleResponse = $this->request($httpMethod, $command, $data);
         $response = $this->parseGuzzleResponse($guzzleResponse);
-        if (err::is($response)) {
-            return $response;
+        $check = fix::values($returns, $response);
+        if (err::is($check)) {
+            throw new ValidationException(err::get($check));
         }
-        return $returns ? fix::values($returns, $response) : $response;
+        return $response;
     }
 
     /**
@@ -52,7 +55,7 @@ class HttpClient
         return preg_replace('/%5B[0-9]+%5D/simU', '', http_build_query($data));
     }
 
-    private function request (string $httpMethod, $command, $data)
+    private function request (string $httpMethod, string $command, array $data): ?Response
     {
         if (!strcasecmp($httpMethod, 'GET')) {
             return $this->fetchGet($command, $data);
@@ -61,7 +64,6 @@ class HttpClient
             return $this->fetchPost($command, $data);
         }
         return null;
-        //return err::setifnot($this->getJSON($method, $name, $data), 'unknown error');
     }
 
     /**
@@ -70,11 +72,10 @@ class HttpClient
      */
     private function parseGuzzleResponse($guzzleResponse)
     {
-        $responseLength = $guzzleResponse->getHeader('Content-Length')[0];
-        $response = $guzzleResponse->getBody()->read($responseLength);
+        $response = $guzzleResponse->getBody()->getContents();
         $response = json_decode($response, true);
         if (is_array($response) && array_key_exists('error', $response)) {
-            $response['_error'] = $response['error'];
+            throw new DirectiException($response['error']);
         }
 
         return $response;
