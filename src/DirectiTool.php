@@ -131,13 +131,20 @@ class DirectiTool extends \hiapi\components\AbstractTool
     /**
      * @return HttpClient
      */
-    protected function getHttpClient(): HttpClient
+    public function getHttpClient(): HttpClient
     {
         if ($this->httpClient === null) {
             $guzzle = new \GuzzleHttp\Client(['base_uri' => $this->baseUri]);
             $this->httpClient = new HttpClient($guzzle);
         }
         return $this->httpClient;
+    }
+
+    public function setHttpClient($httpClient): self
+    {
+        $this->httpClient = $httpClient;
+
+        return $this;
     }
 
     public function post_orderid($method,$name,$data,$inputs=null,$returns=null)

@@ -105,8 +105,8 @@ class HttpClient
         $res = $this->client->request('POST',  $command, [
             'body' => $query,
             'headers' => [
-                'Content-Type' => 'application/x-www-form-urlencoded'
-            ]
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
         ]);
         return $res;
     }
