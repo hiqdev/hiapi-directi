@@ -15,11 +15,11 @@ use err;
 use fix;
 use check;
 use retrieve;
-use apiWebTool;
 use hiapi\directi\modules\ContactModule;
 use hiapi\directi\modules\DomainModule;
 use hiapi\directi\modules\HostModule;
 use hiapi\directi\modules\PollModule;
+use yii\base\InvalidCallException;
 
 /**
  * GoGetSSL certificate tool.

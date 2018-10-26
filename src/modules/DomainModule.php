@@ -14,6 +14,7 @@ use arr;
 use err;
 use fix;
 use check;
+use format;
 use retrieve;
 
 /**
@@ -44,13 +45,20 @@ class DomainModule extends AbstractModule
     public function _domainInfo($row)
     {
         $data = $this->get('domains/details-by-name',[
-            'domain-name'           => $row['domain'],
-            'options'           => ['OrderDetails', 'NsDetails', 'ContactIds'],
+            'domain-name'   => $row['domain'],
+            'options'       => ['All'],
+
         ]);
         $res = fix::values([
             'orderid->id'           => 'id',
-            'domainname->domain'        => 'domain',
-            'domsecret->password'       => 'password',
+            'domainname->domain'    => 'domain',
+            'domsecret->password'   => 'password',
+
+            'registrantcontactid->registrant' => 'id',
+            'admincontactid->admin' => 'id',
+            'billingcontactid->billing'  => 'id',
+            'techcontactid->tech' => 'id',
+
         ],$data);
         $res['created_date'] = format::datetime($data['creationtime'],'iso');
         $res['expiration_date'] = format::datetime($data['endtime'],'iso');
