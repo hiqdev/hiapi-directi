@@ -16,6 +16,10 @@ use fix;
 use check;
 use retrieve;
 use apiWebTool;
+use hiapi\directi\modules\ContactModule;
+use hiapi\directi\modules\DomainModule;
+use hiapi\directi\modules\HostModule;
+use hiapi\directi\modules\PollModule;
 
 /**
  * GoGetSSL certificate tool.
@@ -47,48 +51,60 @@ class DirectiTool extends \hiapi\components\AbstractTool
             }
             $this->{$key} = $data[$key];
         }
+        foreach (['default_nss'] as $key) {
+            if (!empty($data[$key])) {
+                $this->{$key} = $data[$key];
+            }
+        }
     }
 
-    /**
-     * Performs http GET request
-     *
-     * @param string $command
-     * @param array $data
-     * @param array|null $inputs
-     * @param array|null $returns
-     * @param array|null $auxData
-     * @return array
-     */
-    public function get(
-        string $command,
-        array $data,
-        array $inputs=null,
-        array $returns=null,
-        array $auxData=null
-    ) {
-        return $this->call('GET', $command, $data, $inputs, $returns, $auxData);
+    public function getCustomerId()
+    {
+        return $this->customer_id;
     }
 
-    /**
-     * Performs http POST request
-     *
-     * @param string $command
-     * @param array $data
-     * @param array|null $inputs
-     * @param array|null $returns
-     * @param array|null $auxData
-     * @return array
-     */
-    public function post(
-        string $command,
-        array $data,
-        array $inputs=null,
-        array $returns=null,
-        array $auxData=null
-    ) {
-        return $this->call('POST', $command, $data, $inputs, $returns, $auxData);
+    public function getDefaultNss()
+    {
+        return $this->default_nss;
     }
 
+    public function __call($command, $args)
+    {
+        $parts = preg_split('/(?=[A-Z])/', $command);
+        $entity = reset($parts);
+        $module = $this->getModule($entity);
+
+        return call_user_func_array([$module, $command], $args);
+    }
+
+    protected $modules = [
+        'domain'    => DomainModule::class,
+        'domains'   => DomainModule::class,
+        'contact'   => ContactModule::class,
+        'contacts'  => ContactModule::class,
+        'host'      => HostModule::class,
+        'hosts'     => HostModule::class,
+        'poll'      => PollModule::class,
+        'polls'     => PollModule::class,
+    ];
+
+    public function getModule($name)
+    {
+        if (empty($this->modules[$name])) {
+            throw new InvalidCallException("module `$name` not found");
+        }
+        $module = $this->modules[$name];
+        if (!is_object($module)) {
+            $this->modules[$name] = $this->createModule($module);
+        }
+
+        return $this->modules[$name];
+    }
+
+    public function createModule($class)
+    {
+        return new $class($this);
+    }
 
     /**
      * Performs http request with specified method
@@ -102,7 +118,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
      * @param array|null $auxData
      * @return array
      */
-    public function call(
+    public function request(
         string $httpMethod,
         string $command,
         array $data,
@@ -145,354 +161,5 @@ class DirectiTool extends \hiapi\components\AbstractTool
         $this->httpClient = $httpClient;
 
         return $this;
-    }
-
-    public function post_orderid($method,$name,$data,$inputs=null,$returns=null)
-    {
-        $res = $this->domainGetId($data);
-        if (err::is($res)) {
-            return $res;
-        }
-
-        return $this->call($method,$name,$data,$inputs,$returns,['order-id'=>$res['id']]);
-    }
-
-    /// domain maintenance
-    public function domainSaveContacts($row)
-    {
-        return $this->base->_simple_domainSaveContacts($row);
-    }
-
-    /// domain
-    public function domainGetId($row)
-    {
-        $id = $this->get('domains/orderid',$row,[
-            'domain->domain-name'       => 'domain,*',
-        ]);
-
-        return err::is($id) ? $id : compact('id');
-    }
-
-    public function domainCheck($row)
-    {
-    }
-
-    public function domainsCheck($jrow)
-    {
-    }
-
-    public function _domainInfo($row)
-    {
-        $data = $this->get('domains/details-by-name',[
-            'domain-name'           => $row['domain'],
-            'options'           => ['OrderDetails', 'NsDetails', 'ContactIds'],
-        ]);
-        $res = fix::values([
-            'orderid->id'           => 'id',
-            'domainname->domain'        => 'domain',
-            'domsecret->password'       => 'password',
-        ],$data);
-        $res['created_date'] = format::datetime($data['creationtime'],'iso');
-        $res['expiration_date'] = format::datetime($data['endtime'],'iso');
-        if (err::is($data)) {
-            return $data;
-        }
-        for ($i=1; $i <= 13; ++$i) {
-            if ($data["ns$i"]) {
-                $nss[] = $data["ns$i"];
-            }
-        }
-        if ($nss) {
-            $res['nameservers'] = arr::cjoin($nss);
-        }
-
-        return $res;
-        //return array_merge($data,$res);
-    }
-
-    public function domainInfo($row)
-    {
-        $res = $this->_domainInfo($row);
-        if (!err::is($res)) {
-            return $res;
-        }
-        if (!$row['password'] && $row['id']) {
-            $row = array_merge($row,$this->base->domainGetPassword($row));
-        }
-
-        return $this->base->getTool(3027237)->domainInfo($row);
-    }
-
-    public function domainCheckTransfer($row)
-    { // check through evo@ahnames
-        return $this->base->getTool(3027237)->domainCheckTransfer($row);
-    }
-
-    public function domainPrepareContacts($row)
-    {
-        $contacts = $this->base->domainGetWPContactsInfo($row);
-        if (err::is($contacts)) {
-            return $contacts;
-        }
-        $rids = [];
-        foreach ($this->base->getContactTypes() as $t) {
-            $cid = $contacts[$t]['id'];
-            $remoteid = $rids[$cid];
-            if (!$remoteid) {
-                $r = $this->contactSet($contacts[$t]);
-                if (err::is($r)) {
-                    return $r;
-                }
-                $remoteid = $r['id'];
-                $rids[$cid] = $remoteid;
-            }
-            $row[$t . '_remoteid'] = $remoteid;
-        }
-
-        return $row;
-    }
-
-    public function domainRegister($row)
-    {
-        if (!$row['nss']) {
-            $row['nss'] = arr::get($this->base->domainGetNSs($row),'nss');
-        }
-        if (!$row['nss']) {
-            $row['nss'] = $this->default_nss;
-        }
-        $row = $this->domainPrepareContacts($row);
-    //d($row);
-        if (err::is($row)) {
-            return $row;
-        }
-
-        $res = $this->post('domains/register', $row , [
-            'domain->domain-name'                   => 'domain',
-            'period->years'                         => 'period',
-            'nss->ns'                               => 'nss',
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'      => 'id',
-            'tech_remoteid->tech-contact-id'        => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-
-        ],[
-            'entityid->id'          => 'id',
-            'description->domain'   => 'domain',
-        ],[
-            'customer-id'       => $this->customer_id,
-            'invoice-option'    => 'KeepInvoice',
-            'protect-privacy'   => 'false',
-        ]);
-
-        return $res;
-    }
-
-    public function domainTransfer($row)
-    {
-        $row = $this->domainPrepareContacts($row);
-        $res = $this->post('domains/transfer',$row,[
-            'domain->domain-name'           => 'domain',
-            'password->auth-code'           => 'password',
-            'nss->ns'               => 'nss',
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'  => 'id',
-            'tech_remoteid->tech-contact-id'    => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-        ],[
-            'entityid->id'              => 'id',
-            'description->domain'           => 'domain',
-        ],[
-            'customer-id'               => $this->customer_id,
-            'invoice-option'            => 'NoInvoice',
-            'protect-privacy'           => 'false',
-        ]);
-
-        return $res;
-    }
-
-    public function domainRenew($row)
-    {
-    }
-
-    public function domainSetNSs($row)
-    {
-        return $this->post_orderid('domains/modify-ns',$row,[
-            'nss->ns'           => 'nss',
-        ]);
-    }
-
-    public function domainSetContacts($row)
-    {
-        $res = $this->post_orderid('domains/modify-contact',$row,[
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'  => 'id',
-            'tech_remoteid->tech-contact-id'    => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-        ],[
-            'entityid->id'              => 'id',
-            'description->domain'           => 'domain',
-        ]);
-        if (err::is($res) && $res['message'] === 'The Contacts selected are the same as the existing contacts') {
-            return arr::mget($row,'id,domain');
-        }
-
-        return $res;
-    }
-
-    public function domainEnableLock($row)
-    {
-        return $this->post_orderid('domains/enable-theft-protection',$row);
-    }
-
-    public function domainsEnableLock($rows)
-    {
-        foreach ($rows as $k=>$row) {
-            $res[$k] = $this->domainEnableLock($row);
-        }
-
-        return err::reduce($res);
-    }
-
-    public function domainDisableLock($row)
-    {
-        return $this->post_orderid('domains/disable-theft-protection',$row);
-    }
-
-    public function domainsDisableLock($rows)
-    {
-        foreach ($rows as $k=>$row) {
-            $res[$k] = $this->domainDisableLock($row);
-        }
-
-        return err::reduce($res);
-    }
-
-    public function domainSetPassword($row)
-    {
-        return $this->post_orderid('domains/modify-auth-code',$row,[
-            'password->auth-code'       => 'password',
-        ]);
-    }
-
-    public function domainsLoadInfo($rows)
-    {
-        return true;
-    }
-
-    public function domainsGetInfo($rows)
-    {
-        foreach ($rows as $id=>$row) {
-            $res[$id] = $this->domainInfo($row);
-        }
-
-        return err::reduce($res);
-    }
-
-    /// contact
-    public function contactSet($row)
-    {
-        $info = $this->contactGetId($row);
-        $row['id'] = $info['id'] ?? null;
-
-        return (err::is($info) || empty($info['id'])) ? $this->contactCreate($row) : $this->contactUpdate($row);
-    }
-
-    public function contactGetId($row)
-    {
-        $data = $this->get('contacts/search',$row,[
-            'name'              => 'label',
-            'email'             => 'email',
-        ],[],[
-            'customer-id'       => $this->customer_id,
-            'no-of-records'     => 10,
-            'page-no'           => 1,
-        ]);
-
-        if (err::is($data) || empty($data['result'][0]['entity.entityid'])) {
-            return $data;
-        }
-
-        return ['id'=>$data['result'][0]['entity.entityid']];
-    }
-
-    /**
-     * @param array $row
-     * @return array
-     */
-    public function contactCreate(array $row)
-    {
-        $id = $this->post('contacts/add',
-            $this->contactPrepare($row),
-            null,
-            null, [
-            'type'              => 'Contact',
-            'customer-id'       => $this->customer_id,
-        ]);
-
-        return compact('id');
-    }
-
-    public function contactUpdate($row)
-    {
-        return $this->post('contacts/modify',$this->contactPrepare($row),null,[
-            'entityid->id'          => 'id',
-        ],[
-            'customer-id'           => $this->customer_id,
-            'type'              => 'Contact',
-        ]);
-    }
-
-    public function contactPrepare($row)
-    {
-        $phone = fix::digits($row['voice_phone']);
-        $cc = retrieve::phoneCC($phone);
-        $row['phone-cc'] = $cc;
-        $row['phone'] = substr($phone,strlen($cc));
-        $fax = fix::digits($row['fax_phone']);
-        if ($fax) {
-            $cc = retrieve::phoneCC($fax);
-            $row['fax-cc'] = $cc;
-            $row['fax'] = substr($fax,strlen($cc));
-        }
-        if (!$row['organization']) {
-            $row['organization'] = 'Not Applicable';
-        }
-
-        return check::values([
-            'id->contact-id'            => 'id',
-            'name'                      => 'label',
-            'organization->company'     => 'label',
-            'email'                     => 'email',
-            'street1->address-line-1'   => 'label',
-            'street2->address-line-2'   => 'label',
-            'street3->address-line-3'   => 'label',
-            'city'                      => 'label',
-            'postal_code->zipcode'      => 'label',
-            'province->state'           => 'label',
-            'country'                   => 'ref,uc',
-            'phone-cc'                  => 'digits',
-            'phone'                     => 'digits',
-            'fax-cc'                    => 'digits',
-            'fax'                       => 'digits',
-        ], $row);
-    }
-
-    /// host
-    public function hostSet($row)
-    {
-        return $this->hostCreate($row);
-    }
-
-    public function hostCreate($row)
-    {
-        return $this->post_orderid('domains/add-cns',$row,[
-            'host->cns'         => 'ns',
-            'ips->ip'           => 'ips',
-        ]);
-    }
-
-    /// poll
-    public function pollsGetNew($jrow)
-    {
     }
 }
