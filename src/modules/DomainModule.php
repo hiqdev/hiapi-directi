@@ -38,7 +38,7 @@ class DomainModule extends AbstractModule
     {
     }
 
-    public function domainsCheck($jrow)
+    public function domainsCheck($row)
     {
     }
 
@@ -47,19 +47,17 @@ class DomainModule extends AbstractModule
         $data = $this->get('domains/details-by-name',[
             'domain-name'   => $row['domain'],
             'options'       => ['All'],
-
         ]);
         $res = fix::values([
-            'orderid->id'           => 'id',
-            'domainname->domain'    => 'domain',
-            'domsecret->password'   => 'password',
+            'orderid->id'                       => 'id',
+            'domainname->domain'                => 'domain',
+            'domsecret->password'               => 'password',
+            'registrantcontactid->registrant'   => 'id',
+            'admincontactid->admin'             => 'id',
+            'billingcontactid->billing'         => 'id',
+            'techcontactid->tech'               => 'id',
 
-            'registrantcontactid->registrant' => 'id',
-            'admincontactid->admin' => 'id',
-            'billingcontactid->billing'  => 'id',
-            'techcontactid->tech' => 'id',
-
-        ],$data);
+        ], $data);
         $res['created_date'] = format::datetime($data['creationtime'],'iso');
         $res['expiration_date'] = format::datetime($data['endtime'],'iso');
         if (err::is($data)) {
@@ -73,9 +71,7 @@ class DomainModule extends AbstractModule
         if ($nss) {
             $res['nameservers'] = arr::cjoin($nss);
         }
-
         return $res;
-        //return array_merge($data,$res);
     }
 
     public function domainInfo($row)
@@ -129,7 +125,6 @@ class DomainModule extends AbstractModule
             $row['nss'] = $this->tool->getDefaultNss();
         }
         $row = $this->domainPrepareContacts($row);
-    //d($row);
         if (err::is($row)) {
             return $row;
         }
@@ -159,20 +154,20 @@ class DomainModule extends AbstractModule
     {
         $row = $this->domainPrepareContacts($row);
         $res = $this->post('domains/transfer',$row,[
-            'domain->domain-name'           => 'domain',
-            'password->auth-code'           => 'password',
-            'nss->ns'               => 'nss',
+            'domain->domain-name'                   => 'domain',
+            'password->auth-code'                   => 'password',
+            'nss->ns'                               => 'nss',
             'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'  => 'id',
-            'tech_remoteid->tech-contact-id'    => 'id',
+            'admin_remoteid->admin-contact-id'      => 'id',
+            'tech_remoteid->tech-contact-id'        => 'id',
             'billing_remoteid->billing-contact-id'  => 'id',
         ],[
-            'entityid->id'              => 'id',
-            'description->domain'           => 'domain',
+            'entityid->id'          => 'id',
+            'description->domain'   => 'domain',
         ],[
-            'customer-id'               => $this->tool->getCustomerId(),
-            'invoice-option'            => 'NoInvoice',
-            'protect-privacy'           => 'false',
+            'customer-id'       => $this->tool->getCustomerId(),
+            'invoice-option'    => 'NoInvoice',
+            'protect-privacy'   => 'false',
         ]);
 
         return $res;
@@ -185,7 +180,7 @@ class DomainModule extends AbstractModule
     public function domainSetNSs($row)
     {
         return $this->post_orderid('domains/modify-ns',$row,[
-            'nss->ns'           => 'nss',
+            'nss->ns'   => 'nss',
         ]);
     }
 
@@ -193,12 +188,12 @@ class DomainModule extends AbstractModule
     {
         $res = $this->post_orderid('domains/modify-contact',$row,[
             'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'  => 'id',
-            'tech_remoteid->tech-contact-id'    => 'id',
+            'admin_remoteid->admin-contact-id'      => 'id',
+            'tech_remoteid->tech-contact-id'        => 'id',
             'billing_remoteid->billing-contact-id'  => 'id',
         ],[
-            'entityid->id'              => 'id',
-            'description->domain'           => 'domain',
+            'entityid->id'          => 'id',
+            'description->domain'   => 'domain',
         ]);
         if (err::is($res) && $res['message'] === 'The Contacts selected are the same as the existing contacts') {
             return arr::mget($row,'id,domain');
@@ -238,7 +233,7 @@ class DomainModule extends AbstractModule
     public function domainSetPassword($row)
     {
         return $this->post_orderid('domains/modify-auth-code',$row,[
-            'password->auth-code'       => 'password',
+            'password->auth-code'   => 'password',
         ]);
     }
 
