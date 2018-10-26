@@ -64,8 +64,8 @@
     },
     "extra": {
         "config-plugin": {
-            "common": "src/config/common.php",
-            "params": "src/config/params.php"
+            "common": "config/common.php",
+            "params": "config/params.php"
         }
     },
     "minimum-stability": "dev",
