@@ -36,10 +36,16 @@ class DomainModule extends AbstractModule
 
     public function domainCheck($row)
     {
+        $res = [];
+
+        return $res;
     }
 
     public function domainsCheck($row)
     {
+        $res = [];
+
+        return $res;
     }
 
     public function _domainInfo($row)
@@ -103,7 +109,8 @@ class DomainModule extends AbstractModule
             $cid = $contacts[$t]['id'];
             $remoteid = $rids[$cid];
             if (!$remoteid) {
-                $r = $this->contactSet($contacts[$t]);
+//                $r = $this->contactSet($contacts[$t]);
+                $r = (new ContactModule($this->tool))->contactSet($contacts[$t]);
                 if (err::is($r)) {
                     return $r;
                 }

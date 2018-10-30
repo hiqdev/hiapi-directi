@@ -29,16 +29,24 @@ class DirectiToolTest extends \PHPUnit\Framework\TestCase
             ->getMock();
     }
 
+    protected function mockBase()
+    {
+        return $this->getMockBuilder(\mrdpBase::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['domainGetNSs', 'domainGetWPContactsInfo'])
+            ->getMock();
+    }
+
     protected function createTool($guzzleClient)
     {
-        $base = new class {};
+        $base = $this->mockBase();
 
         /** @noinspection PhpUnhandledExceptionInspection */
         $tool = new DirectiTool($base, [
             'url'           => $this->testUri,
             'login'         => '753669',
             'password'      => 'UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY',
-            'customer_id'   => '98765432',
+            'customer_id'   => '19371930',
         ]);
         $tool->setHttpClient(new HttpClient($guzzleClient));
 

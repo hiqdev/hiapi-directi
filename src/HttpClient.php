@@ -89,8 +89,8 @@ class HttpClient
      */
     public function fetchGet (string $command, array $data): Response
     {
-        $query = $this->prepareQuery($data);
-        return $this->client->request('GET', $command . '?' . $query);
+        $query = $command . '?' . $this->prepareQuery($data);
+        return $this->client->request('GET', $query);
     }
 
     /**

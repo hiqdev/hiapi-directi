@@ -56,7 +56,7 @@ class ContactCreateTest extends DirectiToolTest
         $client = $this->mockGuzzleClient();
         $client->method('request')
             ->with('POST', 'contacts/add.json', [
-                'body'    => 'name=WhoisProtectService.net&company=PROTECTSERVICE%2C+LTD.&email=contact1.me%40whoisprotectservice.net&address-line-1=Agios+Fylaxeos+66+and+Chr.+Perevou+2%2C+Kalia+Court%2C+off.+601&city=Limassol&zipcode=3025&country=CY&phone-cc=357&phone=95713635&fax-cc=357&fax=95713635&type=Contact&customer-id=98765432&auth-userid=753669&api-key=UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY',
+                'body'    => 'name=WhoisProtectService.net&company=PROTECTSERVICE%2C+LTD.&email=contact1.me%40whoisprotectservice.net&address-line-1=Agios+Fylaxeos+66+and+Chr.+Perevou+2%2C+Kalia+Court%2C+off.+601&city=Limassol&zipcode=3025&country=CY&phone-cc=357&phone=95713635&fax-cc=357&fax=95713635&type=Contact&customer-id=19371930&auth-userid=753669&api-key=UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY',
                 'headers' => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
