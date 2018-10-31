@@ -53,14 +53,14 @@ class ContactModule extends AbstractModule
      * @param array $row
      * @return array
      */
-    public function contactCreate(array $row)
+    public function contactCreate(array $row): array
     {
         $id = $this->post('contacts/add',
             $this->contactPrepare($row),
             null,
             null, [
-            'type'              => 'Contact',
-            'customer-id'       => $this->tool->getCustomerId(),
+            'type'          => 'Contact',
+            'customer-id'   => $this->tool->getCustomerId(),
         ]);
 
         return compact('id');
@@ -68,10 +68,10 @@ class ContactModule extends AbstractModule
 
     public function contactUpdate($row)
     {
-        return $this->post('contacts/modify',$this->contactPrepare($row),null,[
-            'entityid->id'          => 'id',
+        return $this->post('contacts/modify', $this->contactPrepare($row), null, [
+            'entityid->id'      => 'id',
         ],[
-            'customer-id'           => $this->tool->getCustomerId(),
+            'customer-id'       => $this->tool->getCustomerId(),
             'type'              => 'Contact',
         ]);
     }
@@ -110,5 +110,4 @@ class ContactModule extends AbstractModule
             'fax'                       => 'digits',
         ], $row);
     }
-
 }

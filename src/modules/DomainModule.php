@@ -25,7 +25,11 @@ use retrieve;
 class DomainModule extends AbstractModule
 {
     /// domain
-    public function domainGetId($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainGetId(array $row): array
     {
         $id = $this->get('domains/orderid', $row, [
             'domain->domain-name'       => 'domain,*',
@@ -75,7 +79,11 @@ class DomainModule extends AbstractModule
         return $res;
     }
 
-    public function _domainInfo($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function _domainInfo(array $row): array
     {
         $data = $this->get('domains/details-by-name',[
             'domain-name'   => $row['domain'],
@@ -107,7 +115,11 @@ class DomainModule extends AbstractModule
         return $res;
     }
 
-    public function domainInfo($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainInfo(array $row): array
     {
         $res = $this->_domainInfo($row);
         if (!err::is($res)) {
@@ -125,7 +137,11 @@ class DomainModule extends AbstractModule
         return $this->base->getTool(3027237)->domainCheckTransfer($row);
     }
 
-    public function domainPrepareContacts($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainPrepareContacts(array $row): array
     {
         $contacts = $this->base->domainGetWPContactsInfo($row);
         if (err::is($contacts)) {
@@ -136,7 +152,6 @@ class DomainModule extends AbstractModule
             $cid = $contacts[$t]['id'];
             $remoteid = $rids[$cid];
             if (!$remoteid) {
-//                $r = $this->contactSet($contacts[$t]);
                 $r = (new ContactModule($this->tool))->contactSet($contacts[$t]);
                 if (err::is($r)) {
                     return $r;
@@ -150,7 +165,11 @@ class DomainModule extends AbstractModule
         return $row;
     }
 
-    public function domainRegister($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainRegister(array $row): array
     {
         if (!$row['nss']) {
             $row['nss'] = arr::get($this->base->domainGetNSs($row),'nss');
@@ -184,7 +203,11 @@ class DomainModule extends AbstractModule
         return $res;
     }
 
-    public function domainTransfer($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainTransfer(array $row): array
     {
         $row = $this->domainPrepareContacts($row);
         $res = $this->post('domains/transfer',$row,[
@@ -233,14 +256,22 @@ class DomainModule extends AbstractModule
         return $res;
     }
 
-    public function domainSetNSs($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainSetNSs(array $row): array
     {
-        return $this->post_orderid('domains/modify-ns',$row,[
+        return $this->post_orderid('domains/modify-ns', $row, [
             'nss->ns'   => 'nss',
         ]);
     }
 
-    public function domainSetContacts($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainSetContacts(array $row): array
     {
         $res = $this->post_orderid('domains/modify-contact',$row,[
             'registrant_remoteid->reg-contact-id'   => 'id',
