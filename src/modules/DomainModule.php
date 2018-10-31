@@ -27,7 +27,7 @@ class DomainModule extends AbstractModule
     /// domain
     public function domainGetId($row)
     {
-        $id = $this->get('domains/orderid',$row,[
+        $id = $this->get('domains/orderid', $row, [
             'domain->domain-name'       => 'domain,*',
         ]);
 
@@ -207,9 +207,28 @@ class DomainModule extends AbstractModule
         return $res;
     }
 
-    public function domainRenew($row)
+    /**
+     * @param $row
+     * @return array
+     */
+    public function domainRenew($row): array
     {
-        $res = [];
+        $domain = $this->domainGetId($row);
+        if (err::is($domain)) {
+            return err::set($domain, 'Failed to get domain: ' . err::get($domain));
+        }
+
+        $row['order-id'] = $domain['id'];
+        $row['exp-date'] = strtotime($row['expires_time']);
+
+        $res = $this->post('domains/renew', $row, [
+            'order-id'       => 'id',
+            'period->years'  => 'period',
+            'exp-date'       => 'id',
+
+        ], null, [
+            'invoice-option'    => 'KeepInvoice',
+        ]);
 
         return $res;
     }

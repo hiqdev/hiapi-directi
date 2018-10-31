@@ -77,6 +77,12 @@ class AbstractModule
             return $res;
         }
 
-        return $this->tool->request('POST', $name, $data, $inputs, $returns, ['order-id'=>$res['id']]);
+        return $this->tool->request(
+            'POST',
+            $name,
+            $data,
+            $inputs,
+            $returns,
+            ['order-id'=>$res['id']]);
     }
 }
