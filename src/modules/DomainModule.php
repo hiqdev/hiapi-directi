@@ -34,16 +34,43 @@ class DomainModule extends AbstractModule
         return err::is($id) ? $id : compact('id');
     }
 
-    public function domainCheck($row)
+    /**
+     * @param array $row
+     * @return array
+     */
+    private function prepareDomainsData(array $row): array
     {
-        $res = [];
+        $domainNames = [];
+        $tlds = [];
 
-        return $res;
+        foreach ($row['domains'] as $domain) {
+            list($name, $tld) = explode('.', $domain, 2);
+            if (!in_array($name, $domainNames)) {
+                $domainNames[] = $name;
+            }
+            if (!in_array($tld, $tlds)) {
+                $tlds[] = $tld;
+            }
+        }
+        $row['domain-name'] = $domainNames;
+        $row['tlds'] = $tlds;
+
+        return $row;
     }
 
-    public function domainsCheck($row)
+    /**
+     * !!! НЕ ПРИХОДИТ БОЛЬШЕ ОДНОГО ДОМЕНА ДЛЯ ПРОВЕРКИ !!!
+     *
+     * @param array $row
+     * @return array
+     */
+    public function domainsCheck(array $row): array
     {
-        $res = [];
+        $row = $this->prepareDomainsData($row);
+        $res = $this->get('domains/available', [
+            'domain-name' => $row['domain-name'],
+            'tlds'        => $row['tlds']
+        ]);
 
         return $res;
     }
@@ -87,7 +114,7 @@ class DomainModule extends AbstractModule
             return $res;
         }
         if (!$row['password'] && $row['id']) {
-            $row = array_merge($row,$this->base->domainGetPassword($row));
+            $row = array_merge($row, $this->base->domainGetPassword($row));
         }
 
         return $this->base->getTool(3027237)->domainInfo($row);
@@ -182,6 +209,9 @@ class DomainModule extends AbstractModule
 
     public function domainRenew($row)
     {
+        $res = [];
+
+        return $res;
     }
 
     public function domainSetNSs($row)
