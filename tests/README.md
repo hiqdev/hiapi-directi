@@ -1,11 +1,11 @@
 # Tests
 
 - Domain
-    - check availability
+    - check availability (✓)
     - register
     - renew
     - transfer
-    - info
+    - info               (✓)
     - set contacts
     - set nameservers
 - Contact
