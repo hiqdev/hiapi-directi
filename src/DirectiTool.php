@@ -14,6 +14,7 @@ use arr;
 use err;
 use fix;
 use check;
+use hiapi\directi\modules\AbstractModule;
 use retrieve;
 use hiapi\directi\modules\ContactModule;
 use hiapi\directi\modules\DomainModule;
@@ -99,6 +100,20 @@ class DirectiTool extends \hiapi\components\AbstractTool
         }
 
         return $this->modules[$name];
+    }
+
+    /**
+     * This method is for testing purpose only
+     *
+     * @param string $name
+     * @param AbstractModule $module
+     */
+    public function setModule(string $name, AbstractModule $module): void
+    {
+        if (!key_exists($name, $this->modules)) {
+            throw new InvalidCallException("module `$name` not found");
+        }
+        $this->modules[$name] = $module;
     }
 
     public function createModule($class)

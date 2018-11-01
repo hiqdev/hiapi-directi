@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\contact_module;
 
-
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\DirectiToolTest;
 

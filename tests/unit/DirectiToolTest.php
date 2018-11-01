@@ -5,6 +5,7 @@ namespace hiapi\directi\tests\unit;
 use hiapi\directi\DirectiTool;
 use hiapi\directi\HttpClient;
 use GuzzleHttp\Client;
+use hiapi\directi\modules\DomainModule;
 
 class DirectiToolTest extends \PHPUnit\Framework\TestCase
 {
@@ -27,6 +28,14 @@ class DirectiToolTest extends \PHPUnit\Framework\TestCase
         return $this->getMockBuilder(\mrdpBase::class)
             ->disableOriginalConstructor()
             ->setMethods(['domainGetNSs', 'domainGetWPContactsInfo'])
+            ->getMock();
+    }
+
+    protected function mockDomainModule(array $methods)
+    {
+        return $this->getMockBuilder(DomainModule::class)
+            ->disableOriginalConstructor()
+            ->setMethods($methods)
             ->getMock();
     }
 

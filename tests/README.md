@@ -1,10 +1,10 @@
 # Tests
-
+<pre>
 - Domain 
     - get domain id      (✓)   
     - check availability (✓)
     - register
-    - renew
+    - renew              (✓)
     - transfer
     - info               (✓)
     - set contacts
@@ -16,3 +16,4 @@
     - create
     - update
     - delete
+</pre>
