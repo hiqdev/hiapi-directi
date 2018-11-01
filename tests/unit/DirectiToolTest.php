@@ -27,13 +27,13 @@ class DirectiToolTest extends \PHPUnit\Framework\TestCase
     {
         return $this->getMockBuilder(\mrdpBase::class)
             ->disableOriginalConstructor()
-            ->setMethods(['domainGetNSs', 'domainGetWPContactsInfo'])
+            ->setMethods(['domainGetWPContactsInfo'])
             ->getMock();
     }
 
-    protected function mockDomainModule(array $methods)
+    protected function mockModule(string $moduleClassName, array $methods)
     {
-        return $this->getMockBuilder(DomainModule::class)
+        return $this->getMockBuilder($moduleClassName)
             ->disableOriginalConstructor()
             ->setMethods($methods)
             ->getMock();

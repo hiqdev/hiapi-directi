@@ -4,6 +4,7 @@ namespace hiapi\directi\tests\unit\domain_module;
 
 
 use GuzzleHttp\Psr7\Response;
+use hiapi\directi\modules\DomainModule;
 use hiapi\directi\tests\unit\DirectiToolTest;
 
 class DomainRenewTest extends DirectiToolTest
@@ -12,7 +13,7 @@ class DomainRenewTest extends DirectiToolTest
 
     public function testDomainRenew()
     {
-        $domainModule   = $this->mockDomainModule(['domainGetId']);
+        $domainModule   = $this->mockModule(DomainModule::class, ['domainGetId']);
         $domainName     = 'silverfires.com';
         $domainId       = '84372632';
 

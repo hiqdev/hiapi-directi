@@ -152,7 +152,7 @@ class DomainModule extends AbstractModule
             $cid = $contacts[$t]['id'];
             $remoteid = $rids[$cid];
             if (!$remoteid) {
-                $r = (new ContactModule($this->tool))->contactSet($contacts[$t]);
+                $r = $this->tool->contactSet($contacts[$t]);
                 if (err::is($r)) {
                     return $r;
                 }
@@ -273,7 +273,7 @@ class DomainModule extends AbstractModule
      */
     public function domainSetContacts(array $row): array
     {
-        $res = $this->post_orderid('domains/modify-contact',$row,[
+        $res = $this->post_orderid('domains/modify-contact', $row, [
             'registrant_remoteid->reg-contact-id'   => 'id',
             'admin_remoteid->admin-contact-id'      => 'id',
             'tech_remoteid->tech-contact-id'        => 'id',
