@@ -1,6 +1,7 @@
 # Tests
 
-- Domain
+- Domain 
+    - get domain id      (✓)   
     - check availability (✓)
     - register
     - renew

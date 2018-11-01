@@ -8,6 +8,8 @@ use hiapi\directi\tests\unit\DirectiToolTest;
 
 class ContactCreateTest extends DirectiToolTest
 {
+    private $command = 'contacts/add.json';
+
     protected $contact1 = [
         'id'            => NULL,
         'type'          => 'domain',
@@ -54,9 +56,18 @@ class ContactCreateTest extends DirectiToolTest
     {
         $id = 1234213;
         $client = $this->mockGuzzleClient();
+
+        $requestQuery = sprintf('name=WhoisProtectService.net&company=PROTECTSERVICE%%2C+LTD.' .
+            '&email=contact1.me%%40whoisprotectservice.net&address-line-1=Agios+Fylaxeos+66+and+' .
+            'Chr.+Perevou+2%%2C+Kalia+Court%%2C+off.+601&city=Limassol&zipcode=3025&country=CY' .
+            '&phone-cc=357&phone=95713635&fax-cc=357&fax=95713635&type=Contact&customer-id=%s' .
+            '&auth-userid=%s&api-key=%s',
+            $this->customerId,
+            $this->authUserId,
+            $this->apiKey);
         $client->method('request')
-            ->with('POST', 'contacts/add.json', [
-                'body'    => 'name=WhoisProtectService.net&company=PROTECTSERVICE%2C+LTD.&email=contact1.me%40whoisprotectservice.net&address-line-1=Agios+Fylaxeos+66+and+Chr.+Perevou+2%2C+Kalia+Court%2C+off.+601&city=Limassol&zipcode=3025&country=CY&phone-cc=357&phone=95713635&fax-cc=357&fax=95713635&type=Contact&customer-id=19371930&auth-userid=753669&api-key=UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY',
+            ->with('POST', $this->command, [
+                'body'    => $requestQuery,
                 'headers' => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],

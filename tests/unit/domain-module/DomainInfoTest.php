@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\DirectiToolTest;
 
@@ -19,6 +18,8 @@ class DomainInfoTest extends DirectiToolTest
             'password'  => NULL,
             'id'        => 25844319,
         ];
+
+        $client = $this->mockGuzzleClient();
 
         $requestQuery = sprintf('domains/%s?domain-name=%s&options=All&auth-userid=%s&api-key=%s',
             $this->command,
@@ -62,8 +63,6 @@ class DomainInfoTest extends DirectiToolTest
             '"address1":"Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601","contactid":"80083695",' .
             '"telnocc":"357","zip":"3025","telno":"95713635","faxno":"95713635","customerid":"19371930",' .
             '"type":"Contact"},"moneybackperiod":"4"}';
-
-        $client = $this->mockGuzzleClient();
 
         $client->method('request')
             ->with('GET', $requestQuery)

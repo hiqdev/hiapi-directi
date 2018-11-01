@@ -8,20 +8,11 @@ use GuzzleHttp\Client;
 
 class DirectiToolTest extends \PHPUnit\Framework\TestCase
 {
-    protected $testUri = 'http://test.test/test';
-    protected $authUserId = '753669';
-    protected $apiKey = 'UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY';
+    protected $testUri      = 'http://test.test/test';
+    protected $authUserId   = '753669';
+    protected $apiKey       = 'UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY';
+    protected $customerId   = '19371930';
 
-    /// TODO later because needs API base mocking
-    public function no_testDomainRegister()
-    {
-        $result = $tool->domainRegister([
-
-        ]);
-        $this->assertSame([
-
-        ], $result);
-    }
 
     protected function mockGuzzleClient()
     {
