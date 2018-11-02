@@ -42,49 +42,47 @@ class DomainRegisterTest extends DirectiToolTestBase
         ];
 
         $contactData = [
-            'id' => '25844175',
-            'type' => 'domain',
-            'obj_id' => '25844175',
-            'type_id' => '10532410',
-            'state_id' => '1000248',
-            'roid' => NULL,
-            'client_id' => '2024202',
-            'seller_id' => '1004697',
-            'client' => 'solex',
-            'epp_id' => 'MR_25844175',
-            'name' => 'WhoisProtectService.net',
-            'first_name' => 'WhoisProtectService.net',
-            'last_name' => '',
-            'birth_date' => NULL,
-            'email' => 'silverfires.com@whoisprotectservice.net',
-            'abuse_email' => NULL,
-            'passport_no' => NULL,
+            'id'            => '25844175',
+            'type'          => 'domain',
+            'obj_id'        => '25844175',
+            'type_id'       => '10532410',
+            'state_id'      => '1000248',
+            'roid'          => NULL,
+            'client_id'     => '2024202',
+            'seller_id'     => '1004697',
+            'client'        => 'solex',
+            'epp_id'        => 'MR_25844175',
+            'name'          => 'WhoisProtectService.net',
+            'first_name'    => 'WhoisProtectService.net',
+            'last_name'     => '',
+            'birth_date'    => NULL,
+            'email'         => 'silverfires.com@whoisprotectservice.net',
+            'abuse_email'   => NULL,
+            'passport_no'   => NULL,
             'passport_date' => NULL,
-            'passport_by' => NULL,
-            'organization' => 'PROTECTSERVICE, LTD.',
-            'street1' => 'Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601',
-            'street2' => NULL,
-            'street3' => NULL,
-            'city' => 'Limassol',
-            'province' => NULL,
+            'passport_by'   => NULL,
+            'organization'  => 'PROTECTSERVICE, LTD.',
+            'street1'       => 'Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601',
+            'street2'       => NULL,
+            'street3'       => NULL,
+            'city'          => 'Limassol',
+            'province'      => NULL,
             'province_name' => NULL,
-            'postal_code' => '3025',
-            'country' => 'cy',
-            'country_name' => 'Cyprus',
-            'voice_phone' => '+357.95713635',
-            'fax_phone' => '+357.95713635',
-            'password' => '',
-            'created_date' => NULL,
-            'updated_date' => NULL,
-            'seller' => 'ahnames',
-            'client_type' => 'client',
-            'create_time' => '2018-10-29 14:04:06.880312',
-            'update_time' => '2018-10-29 16:57:56.930721',
-            'remote' => '',
+            'postal_code'   => '3025',
+            'country'       => 'cy',
+            'country_name'  => 'Cyprus',
+            'voice_phone'   => '+357.95713635',
+            'fax_phone'     => '+357.95713635',
+            'password'      => '',
+            'created_date'  => NULL,
+            'updated_date'  => NULL,
+            'seller'        => 'ahnames',
+            'client_type'   => 'client',
+            'create_time'   => '2018-10-29 14:04:06.880312',
+            'update_time'   => '2018-10-29 16:57:56.930721',
+            'remote'        => '',
         ];
-        $contactRemoteId = [
-            'id' => '80079260',
-        ];
+        $contactRemoteId = '80079260';
         $fullContactsData = [
             'id'                    => '25844175',
             'domain'                => 'silverfires.com',
@@ -111,13 +109,19 @@ class DomainRegisterTest extends DirectiToolTestBase
         $contactModule->expects($this->once())
             ->method('contactSet')
             ->with($contactData)
-            ->willReturn($contactRemoteId);
+            ->willReturn([
+                'id' => $contactRemoteId,
+            ]);
 
         $client = $this->mockGuzzleClient();
-        $requestQuery = sprintf('domain-name=%s&years=1&ns=ns1.topdns.me&ns=ns2.topdns.me&reg-contact-id=80079260' .
-            '&admin-contact-id=80079260&tech-contact-id=80079260&billing-contact-id=80079260' .
-            '&customer-id=19371930&invoice-option=KeepInvoice&protect-privacy=false&auth-userid=%s&api-key=%s',
+        $requestQuery = sprintf('domain-name=%s&years=1&ns=ns1.topdns.me&ns=ns2.topdns.me&reg-contact-id=%s' .
+            '&admin-contact-id=%s&tech-contact-id=%s&billing-contact-id=%s&customer-id=19371930&' .
+            'invoice-option=KeepInvoice&protect-privacy=false&auth-userid=%s&api-key=%s',
             $domainName,
+            $contactRemoteId,
+            $contactRemoteId,
+            $contactRemoteId,
+            $contactRemoteId,
             $this->authUserId,
             $this->apiKey);
         $responseBody = '{"actiontypedesc":"Registration of silverfires.com for 1 year",' .

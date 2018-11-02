@@ -7,7 +7,7 @@
     - renew              (✓)
     - transfer
     - info               (✓)
-    - set contacts
+    - set contacts       (✓)
     - set nameservers    (✓)
 - Contact
     - create             (✓)

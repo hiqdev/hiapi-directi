@@ -24,6 +24,9 @@ use hiapi\directi\DirectiTool;
  */
 class AbstractModule
 {
+    public $tool;
+    public $base;
+
     public function __construct(DirectiTool $tool)
     {
         $this->tool = $tool;
