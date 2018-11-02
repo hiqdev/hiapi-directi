@@ -52,7 +52,7 @@ class HttpClient
      */
     private function prepareQuery(array $data): string
     {
-        return preg_replace('/%5B[0-9]+%5D/simU', '', http_build_query($data));
+        return preg_replace('/%5B.+%5D/simU', '', http_build_query($data));
     }
 
     private function request (string $httpMethod, string $command, array $data): ?Response

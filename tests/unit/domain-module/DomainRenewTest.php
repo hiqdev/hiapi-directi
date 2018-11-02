@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpParamsInspection */
 
 namespace hiapi\directi\tests\unit\domain_module;
 
@@ -12,9 +12,8 @@ class DomainRenewTest extends DirectiToolTest
 
     public function testDomainRenew()
     {
-        $domainModule   = $this->mockModule(DomainModule::class, ['domainGetId']);
         $domainName     = 'silverfires.com';
-        $domainId       = '84372632';
+        $domainRemoteId = '84372632';
 
         $domainRenewData = [
             'domain'        => $domainName,
@@ -30,17 +29,18 @@ class DomainRenewTest extends DirectiToolTest
             'expires_time'  => '2019-11-01 09:47:02',
         ];
 
+        $domainModule   = $this->mockModule(DomainModule::class, ['domainGetId']);
         $domainModule->expects($this->once())
             ->method('domainGetId')
             ->with($domainRenewData)
             ->willReturn([
-                'id' => $domainId,
+                'id' => $domainRemoteId,
             ]);
 
         $client = $this->mockGuzzleClient();
         $requestQuery = sprintf('order-id=%s&years=1&exp-date=1572601622' .
             '&invoice-option=KeepInvoice&auth-userid=%s&api-key=%s',
-            $domainId,
+            $domainRemoteId,
             $this->authUserId,
             $this->apiKey
         );

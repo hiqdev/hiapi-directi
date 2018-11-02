@@ -8,7 +8,7 @@
     - transfer
     - info               (✓)
     - set contacts
-    - set nameservers
+    - set nameservers    (✓)
 - Contact
     - create             (✓)
     - update
