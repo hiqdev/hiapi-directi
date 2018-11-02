@@ -31,7 +31,7 @@ class DomainCheckTest extends DirectiToolTest
             ->with('GET', $requestQuery)
             ->willReturn(new Response(200, [], $responseBody));
 
-        $tool = $this->createTool($client);
+        $tool = $this->createTool($this->mockBase(), $client);
         $result = $tool->domainsCheck($domainCheckData);
 
         $this->assertSame([

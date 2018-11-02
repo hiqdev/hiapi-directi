@@ -5,7 +5,7 @@ namespace hiapi\directi\tests\unit;
 use hiapi\directi\DirectiTool;
 use hiapi\directi\HttpClient;
 use GuzzleHttp\Client;
-use hiapi\directi\modules\DomainModule;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class DirectiToolTest extends \PHPUnit\Framework\TestCase
 {
@@ -15,7 +15,7 @@ class DirectiToolTest extends \PHPUnit\Framework\TestCase
     protected $customerId   = '19371930';
 
 
-    protected function mockGuzzleClient()
+    protected function mockGuzzleClient(): MockObject
     {
         return $this->getMockBuilder(Client::class)
             ->disableOriginalConstructor()
@@ -23,15 +23,15 @@ class DirectiToolTest extends \PHPUnit\Framework\TestCase
             ->getMock();
     }
 
-    protected function mockBase()
+    protected function mockBase(array $methods=null): MockObject
     {
         return $this->getMockBuilder(\mrdpBase::class)
             ->disableOriginalConstructor()
-            ->setMethods(['domainGetWPContactsInfo'])
+            ->setMethods($methods)
             ->getMock();
     }
 
-    protected function mockModule(string $moduleClassName, array $methods)
+    protected function mockModule(string $moduleClassName, array $methods): MockObject
     {
         return $this->getMockBuilder($moduleClassName)
             ->disableOriginalConstructor()
@@ -39,16 +39,14 @@ class DirectiToolTest extends \PHPUnit\Framework\TestCase
             ->getMock();
     }
 
-    protected function createTool($guzzleClient)
+    protected function createTool(\mrdpBase $base, Client $guzzleClient): DirectiTool
     {
-        $base = $this->mockBase();
-
         /** @noinspection PhpUnhandledExceptionInspection */
         $tool = new DirectiTool($base, [
             'url'           => $this->testUri,
-            'login'         => '753669',
-            'password'      => 'UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY',
-            'customer_id'   => '19371930',
+            'login'         => $this->authUserId,
+            'password'      => $this->apiKey,
+            'customer_id'   => $this->customerId,
         ]);
         $tool->setHttpClient(new HttpClient($guzzleClient));
 

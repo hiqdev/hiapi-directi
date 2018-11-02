@@ -135,7 +135,7 @@ class DomainRegisterTest extends DirectiToolTest
             ])
             ->willReturn(new Response(200, [], $responseBody));
 
-        $tool = $this->createTool($client);
+        $tool = $this->createTool($this->mockBase(['domainGetWPContactsInfo']), $client);
         $tool->setModule('contact', $contactModule);
 
         $tool->base->method('domainGetWPContactsInfo')

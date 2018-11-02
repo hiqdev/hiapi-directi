@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\modules\DomainModule;
 use hiapi\directi\tests\unit\DirectiToolTest;
@@ -59,7 +58,7 @@ class DomainRenewTest extends DirectiToolTest
             ])
             ->willReturn(new Response(200, [], $responseBody));
 
-        $tool = $this->createTool($client);
+        $tool = $this->createTool($this->mockBase(), $client);
         $domainModule->tool = $tool;
         $tool->setModule('domain', $domainModule);
         $result = $tool->domainRenew($domainRenewData);

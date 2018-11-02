@@ -3,14 +3,14 @@
 - Domain 
     - get domain id      (✓)   
     - check availability (✓)
-    - register
+    - register           (✓)
     - renew              (✓)
     - transfer
     - info               (✓)
     - set contacts
     - set nameservers
 - Contact
-    - create
+    - create             (✓)
     - update
 - Host
     - create

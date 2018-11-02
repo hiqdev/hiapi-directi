@@ -30,7 +30,7 @@ class DomainGetIdTest extends DirectiToolTest
             ->with('GET', $requestQuery)
             ->willReturn(new Response(200, [], $responseBody));
 
-        $tool = $this->createTool($client);
+        $tool = $this->createTool($this->mockBase(), $client);
         $result = $tool->domainGetId($domainGetIdData);
 
         $this->assertSame([

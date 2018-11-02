@@ -72,7 +72,7 @@ class ContactCreateTest extends DirectiToolTest
                 ],
             ])
             ->willReturn(new Response(200, [], $id));
-        $tool = $this->createTool($client);
+        $tool = $this->createTool($this->mockBase(), $client);
 
         $result = $tool->contactCreate($this->contact1);
         $this->assertSame([
