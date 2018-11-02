@@ -3,10 +3,10 @@
 namespace hiapi\directi\tests\unit\domain_module;
 
 use GuzzleHttp\Psr7\Response;
-use hiapi\directi\tests\unit\DirectiToolTest;
+use hiapi\directi\tests\unit\DirectiToolTestBase;
 
 
-class DomainCheckTest extends DirectiToolTest
+class DomainCheckTest extends DirectiToolTestBase
 {
     private $command = 'domains/available.json';
 

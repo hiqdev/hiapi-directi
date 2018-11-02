@@ -3,9 +3,9 @@
 namespace hiapi\directi\tests\unit\domain_module;
 
 use GuzzleHttp\Psr7\Response;
-use hiapi\directi\tests\unit\DirectiToolTest;
+use hiapi\directi\tests\unit\DirectiToolTestBase;
 
-class DomainInfoTest extends DirectiToolTest
+class DomainInfoTest extends DirectiToolTestBase
 {
     private $command = 'details-by-name.json';
 

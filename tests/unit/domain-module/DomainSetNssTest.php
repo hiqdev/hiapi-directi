@@ -4,9 +4,9 @@ namespace hiapi\directi\tests\unit\domain_module;
 
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\modules\DomainModule;
-use hiapi\directi\tests\unit\DirectiToolTest;
+use hiapi\directi\tests\unit\DirectiToolTestBase;
 
-class DomainSetNssTest extends DirectiToolTest
+class DomainSetNssTest extends DirectiToolTestBase
 {
     private $command = 'domains/modify-ns.json';
 

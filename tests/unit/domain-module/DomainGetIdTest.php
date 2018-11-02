@@ -3,9 +3,9 @@
 namespace hiapi\directi\tests\unit\domain_module;
 
 use GuzzleHttp\Psr7\Response;
-use hiapi\directi\tests\unit\DirectiToolTest;
+use hiapi\directi\tests\unit\DirectiToolTestBase;
 
-class DomainGetIdTest extends DirectiToolTest
+class DomainGetIdTest extends DirectiToolTestBase
 {
     private $command = 'domains/orderid.json';
 
