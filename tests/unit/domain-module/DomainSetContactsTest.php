@@ -13,7 +13,6 @@ class DomainSetContactsTest extends DirectiToolTestBase
     public function testDomainSetContacts()
     {
         $domainName     = 'silverfires.com';
-        $domainLocalId  = '25844230';
         $domainRemoteId = 84383857;
 
         $domainSetContactsData = [
@@ -55,17 +54,24 @@ class DomainSetContactsTest extends DirectiToolTestBase
             $domainRemoteId,
             $this->authUserId,
             $this->apiKey);
-        $responseBody = '{"actiontypedesc":"Modification of Contact Details of silverfires.com",' .
-            '"entityid":"84383857","actionstatus":"PENDING_REGISTRANT_AUTHORIZATION","status":"Success",' .
-            '"eaqid":"514705743","currentaction":"514705743","description":"silverfires.com",' .
-            '"actiontype":"ModContact","actionstatusdesc":"Pending Registrant Approval"}';
+        $responseBody = json_encode([
+            'actionstatusdesc'  => 'Modification of Contact Details of ' . $domainName,
+            'entityid'          => $domainRemoteId,
+            'actionstatus'      => 'PENDING_REGISTRANT_AUTHORIZATION',
+            'status'            => 'Success',
+            'eaqid'             => '514705743',
+            'currentaction'     => '514705743',
+            'description'       => $domainName,
+            'actiontype'        => 'ModContact',
+            'actionstatusdesc'  => 'Pending Registrant Approval'
+        ]);
 
         $client->method('request')
             ->with('POST', $this->command, [
                 'body'      => $requestQuery,
                 'headers'   => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
-                ]
+                ],
             ])
             ->willReturn(new Response(200, [], $responseBody));
 
@@ -75,8 +81,8 @@ class DomainSetContactsTest extends DirectiToolTestBase
 
         $result = $tool->domainSetContacts($domainSetContactsData);
         $this->assertSame([
-            'id'     => '84383857',
-            'domain' => 'silverfires.com',
+            'id'     => (string)$domainRemoteId,
+            'domain' => $domainName,
         ], $result);
     }
 }

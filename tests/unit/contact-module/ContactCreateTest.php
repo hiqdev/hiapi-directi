@@ -53,7 +53,7 @@ class ContactCreateTest extends DirectiToolTestBase
 
     public function testContactCreate()
     {
-        $id = 1234213;
+        $contactId = 1234213;
         $client = $this->mockGuzzleClient();
 
         $requestQuery = sprintf('name=WhoisProtectService.net&company=PROTECTSERVICE%%2C+LTD.' .
@@ -71,12 +71,12 @@ class ContactCreateTest extends DirectiToolTestBase
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
             ])
-            ->willReturn(new Response(200, [], $id));
+            ->willReturn(new Response(200, [], $contactId));
         $tool = $this->createTool($this->mockBase(), $client);
 
         $result = $tool->contactCreate($this->contact1);
         $this->assertSame([
-            'id' => $id,
+            'id' => $contactId,
         ], $result);
     }
 }

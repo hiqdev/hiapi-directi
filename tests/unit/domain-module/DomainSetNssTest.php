@@ -13,15 +13,15 @@ class DomainSetNssTest extends DirectiToolTestBase
     public function testDomainSetNss()
     {
         $domainName     = 'silverfires.com';
-        $domainLocalId  = '25844230';
         $domainRemoteId = '84383857';
         $nameServer     = 'nsx.domain.me';
+        $currentAction  = '514554489';
 
         $domainSetNssData = [
             'domain' => $domainName,
             'nss' => [
-                    $nameServer => $nameServer,
-                ],
+                $nameServer => $nameServer,
+            ],
             'id' => $domainLocalId,
         ];
 
@@ -39,14 +39,17 @@ class DomainSetNssTest extends DirectiToolTestBase
             $domainRemoteId,
             $this->authUserId,
             $this->apiKey);
-        $responseBody = sprintf('{"actiontypedesc":"Modification of Nameservers of %s to [%s]",' .
-            '"entityid":"%s","actionstatus":"Success","status":"Success","eaqid":"514554489",' .
-            '"currentaction":"514554489","description":"%s","actiontype":"ModNS",' .
-            '"actionstatusdesc":"Modification Completed Successfully."}',
-            $domainName,
-            $nameServer,
-            $domainRemoteId,
-            $domainName);
+        $responseBody = json_encode([
+            'actiontypedesc'    => "Modification of Nameservers of $domainName to [$nameServer]",
+            'entityid'          => $domainRemoteId,
+            'actionstatus'      => 'Success',
+            "status"            => "Success",
+            "eaqid"             => $currentAction,
+            'currentaction'     => $currentAction,
+            "description"       => $domainName,
+            "actiontype"        => "ModNS",
+            'actionstatusdesc'  => "Modification Completed Successfully.",
+        ]);
         $client->method('request')
             ->with('POST', $this->command, [
                 'body'    => $requestQuery,
@@ -66,8 +69,8 @@ class DomainSetNssTest extends DirectiToolTestBase
             'entityid'          => $domainRemoteId,
             'actionstatus'      => 'Success',
             'status'            => 'Success',
-            'eaqid'             => '514554489',
-            'currentaction'     => '514554489',
+            'eaqid'             => $currentAction,
+            'currentaction'     => $currentAction,
             'description'       => $domainName,
             'actiontype'        => 'ModNS',
             'actionstatusdesc'  => 'Modification Completed Successfully.',

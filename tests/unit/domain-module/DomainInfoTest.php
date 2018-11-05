@@ -73,7 +73,7 @@ class DomainInfoTest extends DirectiToolTestBase
 
         $this->assertSame([
             'id'                => '84311819',
-            'domain'            => 'silverfires.com',
+            'domain'            => $domainName,
             'password'          => '5npuY-XQnJ',
             'registrant'        => '80083695',
             'admin'             => '80083695',

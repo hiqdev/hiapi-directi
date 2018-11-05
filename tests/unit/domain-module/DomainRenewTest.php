@@ -44,11 +44,21 @@ class DomainRenewTest extends DirectiToolTestBase
             $this->authUserId,
             $this->apiKey
         );
-        $responseBody = '{"actiontypedesc":"Renewal of silverfires.com for 1 year",' .
-            '"unutilisedsellingamount":"-14.990","sellingamount":"-14.990","entityid":"84372632",' .
-            '"actionstatus":"Success","status":"Success","eaqid":"514448554","customerid":"19371930",' .
-            '"description":"silverfires.com","actiontype":"RenewDomain","invoiceid":"86704006",' .
-            '"sellingcurrencysymbol":"USD","actionstatusdesc":"Domain renewed successfully"}';
+        $responseBody = json_encode([
+            "actiontypedesc"            => "Renewal of $domainName for 1 year",
+            "unutilisedsellingamount"   => "-14.990",
+            "sellingamount"             => "-14.990",
+            "entityid"                  => $domainRemoteId,
+            "actionstatus"              => "Success",
+            "status"                    => "Success",
+            "eaqid"                     => "514448554",
+            "customerid"                => $this->customerId,
+            "description"               => $domainName,
+            "actiontype"                => "RenewDomain",
+            "invoiceid"                 => "86704006",
+            "sellingcurrencysymbol"     => "USD",
+            "actionstatusdesc"          => "Domain renewed successfully",
+        ]);
         $client->method('request')
             ->with('POST', $this->command, [
                 'body'    => $requestQuery,
@@ -67,12 +77,12 @@ class DomainRenewTest extends DirectiToolTestBase
             'actiontypedesc'            => 'Renewal of silverfires.com for 1 year',
             'unutilisedsellingamount'   => '-14.990',
             'sellingamount'             => '-14.990',
-            'entityid'                  => '84372632',
+            'entityid'                  => $domainRemoteId,
             'actionstatus'              => 'Success',
             'status'                    => 'Success',
             'eaqid'                     => '514448554',
-            'customerid'                => '19371930',
-            'description'               => 'silverfires.com',
+            'customerid'                => $this->customerId,
+            'description'               => $domainName,
             'actiontype'                => 'RenewDomain',
             'invoiceid'                 => '86704006',
             'sellingcurrencysymbol'     => 'USD',
