@@ -4,9 +4,9 @@ namespace hiapi\directi\tests\unit\domain_module;
 
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\modules\DomainModule;
-use hiapi\directi\tests\unit\DirectiToolTestBase;
+use hiapi\directi\tests\unit\TestCase;
 
-class DomainRenewTest extends DirectiToolTestBase
+class DomainRenewTest extends TestCase
 {
     private $command = 'domains/renew.json';
 

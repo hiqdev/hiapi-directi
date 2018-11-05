@@ -3,9 +3,9 @@
 namespace hiapi\directi\tests\unit\contact_module;
 
 use GuzzleHttp\Psr7\Response;
-use hiapi\directi\tests\unit\DirectiToolTestBase;
+use hiapi\directi\tests\unit\TestCase;
 
-class ContactCreateTest extends DirectiToolTestBase
+class ContactCreateTest extends TestCase
 {
     private $command = 'contacts/add.json';
 

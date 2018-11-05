@@ -7,7 +7,7 @@ use hiapi\directi\HttpClient;
 use GuzzleHttp\Client;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class DirectiToolTestBase extends \PHPUnit\Framework\TestCase
+class TestCase extends \PHPUnit\Framework\TestCase
 {
     protected $testUri      = 'http://test.test/test';
     protected $authUserId   = '753669';
