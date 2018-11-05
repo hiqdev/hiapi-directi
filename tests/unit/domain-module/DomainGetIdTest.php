@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\TestCase;
 
 class DomainGetIdTest extends TestCase
@@ -14,28 +13,15 @@ class DomainGetIdTest extends TestCase
         $domainName = 'silverfires.com';
         $domainId = 84372632;
 
-        $client = $this->mockGuzzleClient();
+        $requestQuery = "domain-name=$domainName";
+        $tool = $this->mockGet($this->command, $requestQuery, $domainId);
 
-        $domainGetIdData = [
-            'domain'    => $domainName,
-        ];
-        $requestQuery = sprintf('%s?domain-name=%s&auth-userid=%s&api-key=%s',
-            $this->command,
-            $domainName,
-            $this->authUserId,
-            $this->apiKey
-        );
-        $responseBody = $domainId;
-        $client->method('request')
-            ->with('GET', $requestQuery)
-            ->willReturn(new Response(200, [], $responseBody));
-
-        $tool = $this->createTool($this->mockBase(), $client);
-        $result = $tool->domainGetId($domainGetIdData);
+        $result = $tool->domainGetId([
+            'domain' => $domainName,
+        ]);
 
         $this->assertSame([
             'id' => $domainId,
         ], $result);
     }
-
 }

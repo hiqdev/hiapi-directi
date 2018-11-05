@@ -2,9 +2,7 @@
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\TestCase;
-
 
 class DomainCheckTest extends TestCase
 {
@@ -12,33 +10,29 @@ class DomainCheckTest extends TestCase
 
     public function testDomainCheck()
     {
-        $domainCheckData = [
+        $domainName = 'silverfires.com';
+
+        $requestQuery = 'domain-name=silverfires&tlds=com';
+        $responseBody = json_encode([
+            $domainName => [
+                'classkey'  => 'domcno',
+                'status'    => 'available',
+            ],
+        ]);
+
+        $tool = $this->mockGet($this->command, $requestQuery, $responseBody);
+        $result = $tool->domainsCheck([
             'domains' => [
-                    0 => 'silverfires.com',
+                    0 => $domainName,
                 ],
             'uncached' => true,
-        ];
-
-        $client = $this->mockGuzzleClient();
-
-        $requestQuery = sprintf('%s?domain-name=silverfires&tlds=com&auth-userid=%s&api-key=%s',
-            $this->command,
-            $this->authUserId,
-            $this->apiKey);
-        $responseBody = '{"silverfires.com":{"classkey":"domcno","status":"available"}}';
-
-        $client->method('request')
-            ->with('GET', $requestQuery)
-            ->willReturn(new Response(200, [], $responseBody));
-
-        $tool = $this->createTool($this->mockBase(), $client);
-        $result = $tool->domainsCheck($domainCheckData);
+        ]);
 
         $this->assertSame([
-            'silverfires.com' => [
-                    'classkey'  => 'domcno',
-                    'status'    => 'available',
-                ],
+            $domainName => [
+                'classkey'  => 'domcno',
+                'status'    => 'available',
+            ],
         ], $result);
     }
 }

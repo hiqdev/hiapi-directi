@@ -5,6 +5,7 @@ namespace hiapi\directi\tests\unit;
 use hiapi\directi\DirectiTool;
 use hiapi\directi\HttpClient;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class TestCase extends \PHPUnit\Framework\TestCase
@@ -14,6 +15,53 @@ class TestCase extends \PHPUnit\Framework\TestCase
     protected $apiKey       = 'UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY';
     protected $customerId   = '19371930';
 
+    /**
+     * @var MockObject Client mock
+     */
+    protected $client;
+
+    /**
+     * @var DirectiTool
+     */
+    protected $tool;
+
+    protected function mockGet(string $command, string $requestQuery, string $responseBody)
+    {
+        $client = $this->getGuzzleClient();
+        $client->method('request')
+            ->with('GET', $command . '?' . $this->prepareQuery($requestQuery))
+            ->willReturn(new Response(200, [], $responseBody));
+
+        return $this->createTool($this->mockBase(), $client);
+    }
+
+    protected function mockPost(string $command, string $requestQuery, string $responseBody)
+    {
+        $client = $this->getGuzzleClient();
+        $client->method('request')
+            ->with('POST', $command, [
+                'body'    => $this->prepareQuery($requestQuery),
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+            ])
+            ->willReturn(new Response(200, [], $responseBody));
+
+        return $this->createTool($this->mockBase(), $client);
+    }
+
+    protected function prepareQuery(string $query): string{
+        return "$query&auth-userid={$this->authUserId}&api-key={$this->apiKey}";
+    }
+
+    protected function getGuzzleClient(): MockObject
+    {
+        if ($this->client === null) {
+            $this->client = $this->mockGuzzleClient();
+        }
+
+        return $this->client;
+    }
 
     protected function mockGuzzleClient(): MockObject
     {

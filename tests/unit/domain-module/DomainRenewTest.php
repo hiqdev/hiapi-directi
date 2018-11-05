@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\modules\DomainModule;
 use hiapi\directi\tests\unit\TestCase;
 
@@ -29,7 +28,7 @@ class DomainRenewTest extends TestCase
             'expires_time'  => '2019-11-01 09:47:02',
         ];
 
-        $domainModule   = $this->mockModule(DomainModule::class, ['domainGetId']);
+        $domainModule = $this->mockModule(DomainModule::class, ['domainGetId']);
         $domainModule->expects($this->once())
             ->method('domainGetId')
             ->with($domainRenewData)
@@ -37,13 +36,7 @@ class DomainRenewTest extends TestCase
                 'id' => $domainRemoteId,
             ]);
 
-        $client = $this->mockGuzzleClient();
-        $requestQuery = sprintf('order-id=%s&years=1&exp-date=1572601622' .
-            '&invoice-option=KeepInvoice&auth-userid=%s&api-key=%s',
-            $domainRemoteId,
-            $this->authUserId,
-            $this->apiKey
-        );
+        $requestQuery = "order-id=$domainRemoteId&years=1&exp-date=1572601622&invoice-option=KeepInvoice";
         $responseBody = json_encode([
             "actiontypedesc"            => "Renewal of $domainName for 1 year",
             "unutilisedsellingamount"   => "-14.990",
@@ -59,16 +52,8 @@ class DomainRenewTest extends TestCase
             "sellingcurrencysymbol"     => "USD",
             "actionstatusdesc"          => "Domain renewed successfully",
         ]);
-        $client->method('request')
-            ->with('POST', $this->command, [
-                'body'    => $requestQuery,
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-            ])
-            ->willReturn(new Response(200, [], $responseBody));
+        $tool = $this->mockPost($this->command, $requestQuery, $responseBody);
 
-        $tool = $this->createTool($this->mockBase(), $client);
         $domainModule->tool = $tool;
         $tool->setModule('domain', $domainModule);
         $result = $tool->domainRenew($domainRenewData);

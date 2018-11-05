@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\contact_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\TestCase;
 
 class ContactCreateTest extends TestCase
@@ -54,25 +53,13 @@ class ContactCreateTest extends TestCase
     public function testContactCreate()
     {
         $contactId = 1234213;
-        $client = $this->mockGuzzleClient();
 
-        $requestQuery = sprintf('name=WhoisProtectService.net&company=PROTECTSERVICE%%2C+LTD.' .
-            '&email=contact1.me%%40whoisprotectservice.net&address-line-1=Agios+Fylaxeos+66+and+' .
-            'Chr.+Perevou+2%%2C+Kalia+Court%%2C+off.+601&city=Limassol&zipcode=3025&country=CY' .
-            '&phone-cc=357&phone=95713635&fax-cc=357&fax=95713635&type=Contact&customer-id=%s' .
-            '&auth-userid=%s&api-key=%s',
-            $this->customerId,
-            $this->authUserId,
-            $this->apiKey);
-        $client->method('request')
-            ->with('POST', $this->command, [
-                'body'    => $requestQuery,
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-            ])
-            ->willReturn(new Response(200, [], $contactId));
-        $tool = $this->createTool($this->mockBase(), $client);
+        $requestQuery = 'name=WhoisProtectService.net&company=PROTECTSERVICE%2C+LTD.' .
+            '&email=contact1.me%40whoisprotectservice.net&address-line-1=Agios+Fylaxeos+66+and+' .
+            'Chr.+Perevou+2%2C+Kalia+Court%2C+off.+601&city=Limassol&zipcode=3025&country=CY' .
+            '&phone-cc=357&phone=95713635&fax-cc=357&fax=95713635&type=Contact&customer-id=' . $this->customerId;
+
+        $tool = $this->mockPost($this->command, $requestQuery, $contactId);
 
         $result = $tool->contactCreate($this->contact1);
         $this->assertSame([
