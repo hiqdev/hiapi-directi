@@ -24,6 +24,9 @@ use hiapi\directi\DirectiTool;
  */
 class AbstractModule
 {
+    public $tool;
+    public $base;
+
     public function __construct(DirectiTool $tool)
     {
         $this->tool = $tool;
@@ -77,6 +80,12 @@ class AbstractModule
             return $res;
         }
 
-        return $this->tool->request('POST', $name, $data, $inputs, $returns, ['order-id'=>$res['id']]);
+        return $this->tool->request(
+            'POST',
+            $name,
+            $data,
+            $inputs,
+            $returns,
+            ['order-id'=>$res['id']]);
     }
 }

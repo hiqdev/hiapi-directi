@@ -1,17 +1,19 @@
 # Tests
-
-- Domain
-    - check availability
-    - register
-    - renew
+<pre>
+- Domain 
+    - get domain id      (✓)   
+    - check availability (✓)
+    - register           (✓)
+    - renew              (✓)
     - transfer
-    - info
-    - set contacts
-    - set nameservers
+    - info               (✓)
+    - set contacts       (✓)
+    - set nameservers    (✓)
 - Contact
-    - create
+    - create             (✓)
     - update
 - Host
     - create
     - update
     - delete
+</pre>
