@@ -1,8 +1,7 @@
-<?php
+<?php /** @noinspection PhpComposerExtensionStubsInspection */
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\modules\ContactModule;
 use hiapi\directi\tests\unit\TestCase;
 
@@ -82,7 +81,7 @@ class DomainRegisterTest extends TestCase
             'update_time'   => '2018-10-29 16:57:56.930721',
             'remote'        => '',
         ];
-        $contactRemoteId = '80079260';
+        $contactRemoteId = 80079260;
         $fullContactsData = [
             'id'                    => '25844175',
             'domain'                => 'silverfires.com',
@@ -113,33 +112,34 @@ class DomainRegisterTest extends TestCase
                 'id' => $contactRemoteId,
             ]);
 
-        $client = $this->mockGuzzleClient();
-        $requestQuery = sprintf('domain-name=%s&years=1&ns=ns1.topdns.me&ns=ns2.topdns.me&reg-contact-id=%s' .
-            '&admin-contact-id=%s&tech-contact-id=%s&billing-contact-id=%s&customer-id=19371930&' .
-            'invoice-option=KeepInvoice&protect-privacy=false&auth-userid=%s&api-key=%s',
+        $requestQuery = sprintf('domain-name=%s&years=1&ns=ns1.topdns.me&ns=ns2.topdns.me&reg-contact-id=%d' .
+            '&admin-contact-id=%d&tech-contact-id=%d&billing-contact-id=%d&customer-id=19371930&' .
+            'invoice-option=KeepInvoice&protect-privacy=false',
             $domainName,
             $contactRemoteId,
             $contactRemoteId,
             $contactRemoteId,
-            $contactRemoteId,
-            $this->authUserId,
-            $this->apiKey);
-        $responseBody = '{"actiontypedesc":"Registration of silverfires.com for 1 year",' .
-            '"unutilisedsellingamount":"-14.990","sellingamount":"-14.990","entityid":"84334750",' .
-            '"actionstatus":"Success","status":"Success","eaqid":"514034683","customerid":"19371930",' .
-            '"description":"silverfires.com","actiontype":"AddNewDomain","invoiceid":"86624444",' .
-            '"sellingcurrencysymbol":"USD","actionstatusdesc":"Domain registration completed Successfully"}';
+            $contactRemoteId
+        );
+        $responseBody = json_encode([
+            'actiontypedesc'            => 'Registration of silverfires.com for 1 year',
+            'unutilisedsellingamount'   => '-14.990',
+            'sellingamount'             => '-14.990',
+            'entityid'                  => '84334750',
+            'actionstatus'              => 'Success',
+            'status'                    => 'Success',
+            'eaqid'                     => '514034683',
+            'customerid'                => '19371930',
+            'description'               => $domainName,
+            'actiontype'                => 'AddNewDomain',
+            'invoiceid'                 => '86624444',
+            'sellingcurrencysymbol'     => 'USD',
+            'actionstatusdesc'          => 'Domain registration completed Successfully',
+        ]);
 
-        $client->method('request')
-            ->with('POST', $this->command, [
-                'body' => $requestQuery,
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ]
-            ])
-            ->willReturn(new Response(200, [], $responseBody));
 
-        $tool = $this->createTool($this->mockBase(['domainGetWPContactsInfo']), $client);
+        $tool = $this->mockPost($this->command, $requestQuery, $responseBody, ['domainGetWPContactsInfo']);
+
         $tool->setModule('contact', $contactModule);
 
         $tool->base->method('domainGetWPContactsInfo')
@@ -149,7 +149,7 @@ class DomainRegisterTest extends TestCase
         $result = $tool->domainRegister($domainRegisterData);
         $this->assertSame([
                 'id'     => '84334750',
-                'domain' => 'silverfires.com',
+                'domain' => $domainName,
         ], $result);
     }
 }

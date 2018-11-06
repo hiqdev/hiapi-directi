@@ -25,17 +25,17 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected $tool;
 
-    protected function mockGet(string $command, string $requestQuery, string $responseBody)
+    protected function mockGet(string $command, string $requestQuery, string $responseBody, array $baseMethods=null)
     {
         $client = $this->getGuzzleClient();
         $client->method('request')
             ->with('GET', $command . '?' . $this->prepareQuery($requestQuery))
             ->willReturn(new Response(200, [], $responseBody));
 
-        return $this->createTool($this->mockBase(), $client);
+        return $this->createTool($this->mockBase($baseMethods), $client);
     }
 
-    protected function mockPost(string $command, string $requestQuery, string $responseBody)
+    protected function mockPost(string $command, string $requestQuery, string $responseBody, array $baseMethods=null)
     {
         $client = $this->getGuzzleClient();
         $client->method('request')
@@ -47,7 +47,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
             ])
             ->willReturn(new Response(200, [], $responseBody));
 
-        return $this->createTool($this->mockBase(), $client);
+        return $this->createTool($this->mockBase($baseMethods), $client);
     }
 
     protected function prepareQuery(string $query): string{

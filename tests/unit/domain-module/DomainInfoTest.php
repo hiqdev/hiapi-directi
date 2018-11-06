@@ -2,7 +2,6 @@
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\TestCase;
 
 class DomainInfoTest extends TestCase
