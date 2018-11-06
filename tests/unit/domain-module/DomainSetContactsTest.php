@@ -48,12 +48,9 @@ class DomainSetContactsTest extends TestCase
                 'id' => $domainRemoteId,
             ]);
 
-        $client = $this->mockGuzzleClient();
-        $requestQuery = sprintf('reg-contact-id=80032054&admin-contact-id=80187184&tech-contact-id=80032054' .
-            '&billing-contact-id=80032054&order-id=%s&auth-userid=%s&api-key=%s',
-            $domainRemoteId,
-            $this->authUserId,
-            $this->apiKey);
+        $requestQuery = "reg-contact-id=80032054&admin-contact-id=80187184&tech-contact-id=80032054&" .
+                        "billing-contact-id=80032054&order-id=${domainRemoteId}";
+
         $responseBody = json_encode([
             'actionstatusdesc'  => 'Modification of Contact Details of ' . $domainName,
             'entityid'          => $domainRemoteId,
@@ -66,16 +63,7 @@ class DomainSetContactsTest extends TestCase
             'actionstatusdesc'  => 'Pending Registrant Approval'
         ]);
 
-        $client->method('request')
-            ->with('POST', $this->command, [
-                'body'      => $requestQuery,
-                'headers'   => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-            ])
-            ->willReturn(new Response(200, [], $responseBody));
-
-        $tool = $this->createTool($this->mockBase(), $client);
+        $tool = $this->mockPost($this->command, $requestQuery, $responseBody);
         $tool->setModule('domain', $domainModule);
         $domainModule->tool = $tool;
 
