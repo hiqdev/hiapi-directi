@@ -1,13 +1,12 @@
-<?php
+<?php /** @noinspection PhpComposerExtensionStubsInspection */
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\tests\unit\TestCase;
 
 class DomainInfoTest extends TestCase
 {
-    private $command = 'details-by-name.json';
+    private $command = 'domains/details-by-name.json';
 
     public function testDomainInfo()
     {
@@ -19,56 +18,145 @@ class DomainInfoTest extends TestCase
             'id'        => 25844319,
         ];
 
-        $client = $this->mockGuzzleClient();
 
-        $requestQuery = sprintf('domains/%s?domain-name=%s&options=All&auth-userid=%s&api-key=%s',
-            $this->command,
-            $domainName,
-            $this->authUserId,
-            $this->apiKey);
+        $requestQuery = sprintf('domain-name=%s&options=All', $domainName);
 
-        $responseBody = '{"billingcontact":{"faxnocc":"357","emailaddr":"silverfires.com@whoisprotectservice.net",' .
-            '"country":"CY","contactstatus":"Active","contacttype":[],"name":"WhoisProtectService.net",' .'
-            "parentkey":"999999999_999999998_753669","company":"PROTECTSERVICE, LTD.","city":"Limassol",' .
-            '"address1":"Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601","contactid":"80083695",' .
-            '"telnocc":"357","zip":"3025","telno":"95713635","faxno":"95713635","customerid":"19371930",' .
-            '"type":"Contact"},"description":"silverfires.com","eaqid":"0","addons":[],"currentstatus":"Active",' .
-            '"paused":"false","noOfNameServers":"2","customercost":"0.0","domainstatus":["sixtydaylock"],' .
-            '"raaVerificationStartTime":"1540560893","recurring":"false","autoRenewTermType":"LONG_TERM",' .
-            '"entitytypeid":"3","isImmediateReseller":"true","productkey":"domcno","dnssec":[],"classkey":"domcno",' .
-            '"orderSuspendedByParent":"false","endtime":"1572096892","entityid":"84311819","jumpConditions":[],' .
-            '"multilingualflag":"f","cns":{},"gdpr":{"enabled":"true","eligible":"true"},"actioncompleted":"0",' .
-            '"registrantcontactid":"80083695","domainname":"silverfires.com","productcategory":"domorder",' .
-            '"admincontactid":"80083695","isprivacyprotected":"false","techcontactid":"80083695",' .
-            '"orderid":"84311819","admincontact":{"faxnocc":"357",' .
-            '"emailaddr":"silverfires.com@whoisprotectservice.net","country":"CY",' .
-            '"contactstatus":"Active","contacttype":[],"name":"WhoisProtectService.net",' .
-            '"parentkey":"999999999_999999998_753669","company":"PROTECTSERVICE, LTD.","city":"Limassol",' .
-            '"address1":"Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601","contactid":"80083695",' .
-            '"telnocc":"357","zip":"3025","telno":"95713635","faxno":"95713635","customerid":"19371930",' . '
-            "type":"Contact"},"parentkey":"999999999_999999998_753669","orderstatus":["transferlock"],' .
-            '"creationtime":"1540560892","classname":"com.logicboxes.foundation.sfnb.order.domorder.DomCno",' .
-            '"techcontact":{"faxnocc":"357","emailaddr":"silverfires.com@whoisprotectservice.net","country":"CY",' .
-            '"contactstatus":"Active","contacttype":[],"name":"WhoisProtectService.net",' .
-            '"parentkey":"999999999_999999998_753669","company":"PROTECTSERVICE, LTD.","city":"Limassol",' .
-            '"address1":"Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601","contactid":"80083695",' .
-            '"telnocc":"357","zip":"3025","telno":"95713635","faxno":"95713635","customerid":"19371930",' .
-            '"type":"Contact"},"customerid":"19371930","ns2":"ns2.topdns.me","ns1":"ns1.topdns.me",' .
-            '"resellercost":"0","billingcontactid":"80083695","autoRenewAttemptDuration":"30",' .
-            '"privacyprotectedallowed":"true","domsecret":"5npuY-XQnJ","raaVerificationStatus":"Pending",' .
-            '"isOrderSuspendedUponExpiry":"false","allowdeletion":"true","bulkwhoisoptout":"t",' .
-            '"registrantcontact":{"faxnocc":"357","emailaddr":"silverfires.com@whoisprotectservice.net",' .
-            '"country":"CY","contactstatus":"Active","contacttype":[],"name":"WhoisProtectService.net",' .
-            '"parentkey":"999999999_999999998_753669","company":"PROTECTSERVICE, LTD.","city":"Limassol",' .
-            '"address1":"Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601","contactid":"80083695",' .
-            '"telnocc":"357","zip":"3025","telno":"95713635","faxno":"95713635","customerid":"19371930",' .
-            '"type":"Contact"},"moneybackperiod":"4"}';
+        $responseBody = json_encode([
+            'billingcontact'        => [
+                    'faxnocc'       => '357',
+                    'emailaddr'     => $domainName . '@whoisprotectservice.net',
+                    'country'       => 'CY',
+                    'contactstatus' => 'Active',
+                    'contacttype'   => [],
+                    'name'          => 'WhoisProtectService.net',
+                    'parentkey'     => '999999999_999999998_753669',
+                    'company'       => 'PROTECTSERVICE, LTD.',
+                    'city'          => 'Limassol',
+                    'address1'      => 'Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601',
+                    'contactid'     => '80083695',
+                    'telnocc'       => '357',
+                    'zip'           => '3025',
+                    'telno'         => '95713635',
+                    'faxno'         => '95713635',
+                    'customerid'    => '19371930',
+                    'type'          => 'Contact',
+                ],
+            'description'       => $domainName,
+            'eaqid'             => '0',
+            'addons'            => [],
+            'currentstatus'     => 'Active',
+            'paused'            => 'false',
+            'noOfNameServers'   => '2',
+            'customercost'      => '0.0',
+            'domainstatus'      => [
+                    0 => 'sixtydaylock',
+                ],
+            'raaVerificationStartTime'  => '1540560893',
+            'recurring'                 => 'false',
+            'autoRenewTermType'         => 'LONG_TERM',
+            'entitytypeid'              => '3',
+            'isImmediateReseller'       => 'true',
+            'productkey'                => 'domcno',
+            'dnssec'                    => [],
+            'classkey'                  => 'domcno',
+            'orderSuspendedByParent'    => 'false',
+            'endtime'                   => '1572096892',
+            'entityid'                  => '84311819',
+            'jumpConditions'            => [],
+            'multilingualflag'          => 'f',
+            'cns'                       => [],
+            'gdpr'                      => [
+                    'enabled'   => 'true',
+                    'eligible'  => 'true',
+                ],
+            'actioncompleted'       => '0',
+            'registrantcontactid'   => '80083695',
+            'domainname'            => $domainName,
+            'productcategory'       => 'domorder',
+            'admincontactid'        => '80083695',
+            'isprivacyprotected'    => 'false',
+            'techcontactid'         => '80083695',
+            'orderid'               => '84311819',
+            'admincontact' => [
+                    'faxnocc'       => '357',
+                    'emailaddr'     => 'silverfires.com@whoisprotectservice.net',
+                    'country'       => 'CY',
+                    'contactstatus' => 'Active',
+                    'contacttype'   => [],
+                    'name'          => 'WhoisProtectService.net',
+                    'parentkey'     => '999999999_999999998_753669',
+                    'company'       => 'PROTECTSERVICE, LTD.',
+                    'city'          => 'Limassol',
+                    'address1'      => 'Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601',
+                    'contactid'     => '80083695',
+                    'telnocc'       => '357',
+                    'zip'           => '3025',
+                    'telno'         => '95713635',
+                    'faxno'         => '95713635',
+                    'customerid'    => '19371930',
+                    'type'          => 'Contact',
+                ],
+            'parentkey'     => '999999999_999999998_753669',
+            'orderstatus'   => [
+                    0 => 'transferlock',
+                ],
+            'creationtime'  => '1540560892',
+            'classname'     => 'com.logicboxes.foundation.sfnb.order.domorder.DomCno',
+            'techcontact' => [
+                    'faxnocc'       => '357',
+                    'emailaddr'     => 'silverfires.com@whoisprotectservice.net',
+                    'country'       => 'CY',
+                    'contactstatus' => 'Active',
+                    'contacttype'   => [],
+                    'name'          => 'WhoisProtectService.net',
+                    'parentkey'     => '999999999_999999998_753669',
+                    'company'       => 'PROTECTSERVICE, LTD.',
+                    'city'          => 'Limassol',
+                    'address1'      => 'Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601',
+                    'contactid'     => '80083695',
+                    'telnocc'       => '357',
+                    'zip'           => '3025',
+                    'telno'         => '95713635',
+                    'faxno'         => '95713635',
+                    'customerid'    => '19371930',
+                    'type'          => 'Contact',
+                ],
+            'customerid'                    => '19371930',
+            'ns2'                           => 'ns2.topdns.me',
+            'ns1'                           => 'ns1.topdns.me',
+            'resellercost'                  => '0',
+            'billingcontactid'              => '80083695',
+            'autoRenewAttemptDuration'      => '30',
+            'privacyprotectedallowed'       => 'true',
+            'domsecret'                     => '5npuY-XQnJ',
+            'raaVerificationStatus'         => 'Pending',
+            'isOrderSuspendedUponExpiry'    => 'false',
+            'allowdeletion'                 => 'true',
+            'bulkwhoisoptout'               => 't',
+            'registrantcontact'             => [
+                    'faxnocc'       => '357',
+                    'emailaddr'     => $domainName . '@whoisprotectservice.net',
+                    'country'       => 'CY',
+                    'contactstatus' => 'Active',
+                    'contacttype'   => [],
+                    'name'          => 'WhoisProtectService.net',
+                    'parentkey'     => '999999999_999999998_753669',
+                    'company'       => 'PROTECTSERVICE, LTD.',
+                    'city'          => 'Limassol',
+                    'address1'      => 'Agios Fylaxeos 66 and Chr. Perevou 2, Kalia Court, off. 601',
+                    'contactid'     => '80083695',
+                    'telnocc'       => '357',
+                    'zip'           => '3025',
+                    'telno'         => '95713635',
+                    'faxno'         => '95713635',
+                    'customerid'    => '19371930',
+                    'type'          => 'Contact',
+                ],
+            'moneybackperiod' => '4',
+        ]);
 
-        $client->method('request')
-            ->with('GET', $requestQuery)
-            ->willReturn(new Response(200, [], $responseBody));
+        $tool = $this->mockGet($this->command, $requestQuery, $responseBody);
 
-        $tool = $this->createTool($this->mockBase(), $client);
         $result = $tool->domainInfo($domainInfoData);
 
         $this->assertSame([

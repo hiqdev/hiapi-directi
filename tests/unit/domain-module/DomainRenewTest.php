@@ -12,7 +12,7 @@ class DomainRenewTest extends TestCase
     public function testDomainRenew()
     {
         $domainName     = 'silverfires.com';
-        $domainRemoteId = '84372632';
+        $domainRemoteId = 84372632;
 
         $domainRenewData = [
             'domain'        => $domainName,

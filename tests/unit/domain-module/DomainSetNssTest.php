@@ -1,8 +1,9 @@
-<?php /** @noinspection PhpParamsInspection */
+<?php /** @noinspection PhpComposerExtensionStubsInspection */
+
+/** @noinspection PhpParamsInspection */
 
 namespace hiapi\directi\tests\unit\domain_module;
 
-use GuzzleHttp\Psr7\Response;
 use hiapi\directi\modules\DomainModule;
 use hiapi\directi\tests\unit\TestCase;
 
@@ -33,12 +34,7 @@ class DomainSetNssTest extends TestCase
                 'id' => $domainRemoteId,
             ]);
 
-        $client = $this->mockGuzzleClient();
-        $requestQuery = sprintf('ns=%s&order-id=%s&auth-userid=%s&api-key=%s',
-            $nameServer,
-            $domainRemoteId,
-            $this->authUserId,
-            $this->apiKey);
+        $requestQuery = "ns=${nameServer}&order-id=${domainRemoteId}";
         $responseBody = json_encode([
             'actiontypedesc'    => "Modification of Nameservers of $domainName to [$nameServer]",
             'entityid'          => $domainRemoteId,
@@ -50,16 +46,8 @@ class DomainSetNssTest extends TestCase
             "actiontype"        => "ModNS",
             'actionstatusdesc'  => "Modification Completed Successfully.",
         ]);
-        $client->method('request')
-            ->with('POST', $this->command, [
-                'body'    => $requestQuery,
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-            ])
-            ->willReturn(new Response(200, [], $responseBody));
 
-        $tool = $this->createTool($this->mockBase(), $client);
+        $tool = $this->mockPost($this->command, $requestQuery, $responseBody);
         $domainModule->tool = $tool;
         $tool->setModule('domain', $domainModule);
         $result = $tool->domainSetNss($domainSetNssData);
