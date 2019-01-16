@@ -9,11 +9,7 @@
  */
 
 return [
-    'container' => [
-        'definitions' => [
-            'directiTool' => [
-                '__class' => \hiapi\directi\DirectiTool::class,
-            ],
-        ],
+    'directiTool' => [
+        '__class' => \hiapi\directi\DirectiTool::class,
     ],
 ];
