@@ -45,7 +45,7 @@
         }
     ],
     "require": {
-        "hiqdev/hiapi-legacy": "dev-master"
+        "hiqdev/hiapi-legacy": "*"
     },
     "require-dev": {
         "hiqdev/hidev-php": "<2.0 || dev-master",
