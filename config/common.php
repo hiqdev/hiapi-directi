@@ -8,8 +8,10 @@
  * @copyright Copyright (c) 2017, HiQDev (http://hiqdev.com/)
  */
 
-return [
+$definitions = [
     'directiTool' => [
         '__class' => \hiapi\directi\DirectiTool::class,
     ],
 ];
+
+return class_exists('Yii') ? ['container' => ['definitions' => $definitions]] : $definitions;
