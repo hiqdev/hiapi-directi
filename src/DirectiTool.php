@@ -33,7 +33,7 @@ use yii\base\InvalidCallException;
  */
 class DirectiTool extends \hiapi\components\AbstractTool
 {
-    private $baseUri = 'https://test.httpapi.com/api/';
+    private $uri = 'https://test.httpapi.com/api/';
 
     protected $url;
     protected $login;
@@ -46,13 +46,13 @@ class DirectiTool extends \hiapi\components\AbstractTool
     public function __construct($base, $data)
     {
         parent::__construct($base, $data);
-        foreach (['url','login','password','customer_id'] as $key) {
+        foreach (['login','password'] as $key) {
             if (empty($data[$key])) {
                 throw new \Exception("`$key` must be given for DirectiTool");
             }
             $this->{$key} = $data[$key];
         }
-        foreach (['default_nss'] as $key) {
+        foreach (['url', 'customer_id', 'default_nss'] as $key) {
             if (!empty($data[$key])) {
                 $this->{$key} = $data[$key];
             }
@@ -165,7 +165,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     public function getHttpClient(): HttpClient
     {
         if ($this->httpClient === null) {
-            $guzzle = new \GuzzleHttp\Client(['base_uri' => $this->baseUri]);
+            $guzzle = new \GuzzleHttp\Client(['base_uri' => $this->uri]);
             $this->httpClient = new HttpClient($guzzle);
         }
         return $this->httpClient;
