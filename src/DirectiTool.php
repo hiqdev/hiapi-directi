@@ -10,16 +10,13 @@
 
 namespace hiapi\directi;
 
-use arr;
-use err;
-use fix;
-use check;
 use hiapi\directi\modules\AbstractModule;
-use retrieve;
 use hiapi\directi\modules\ContactModule;
 use hiapi\directi\modules\DomainModule;
 use hiapi\directi\modules\HostModule;
 use hiapi\directi\modules\PollModule;
+use hiapi\legacy\lib\deps\err;
+use hiapi\legacy\lib\deps\fix;
 use yii\base\InvalidCallException;
 
 /**

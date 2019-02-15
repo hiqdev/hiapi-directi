@@ -2,13 +2,13 @@
 
 namespace hiapi\directi;
 
-use err;
-use check;
-use fix;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\exceptions\DirectiException;
 use hiapi\directi\exceptions\ValidationException;
+use hiapi\legacy\lib\deps\check;
+use hiapi\legacy\lib\deps\err;
+use hiapi\legacy\lib\deps\fix;
 
 class HttpClient
 {

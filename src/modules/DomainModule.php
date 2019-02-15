@@ -10,12 +10,10 @@
 
 namespace hiapi\directi\modules;
 
-use arr;
-use err;
-use fix;
-use check;
-use format;
-use retrieve;
+use hiapi\legacy\lib\deps\arr;
+use hiapi\legacy\lib\deps\err;
+use hiapi\legacy\lib\deps\fix;
+use hiapi\legacy\lib\deps\format;
 
 /**
  * Domain operations.
