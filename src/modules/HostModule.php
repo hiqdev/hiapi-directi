@@ -10,12 +10,6 @@
 
 namespace hiapi\directi\modules;
 
-use arr;
-use err;
-use fix;
-use check;
-use retrieve;
-
 /**
  * Host operations.
  *

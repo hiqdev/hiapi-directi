@@ -10,11 +10,7 @@
 
 namespace hiapi\directi\modules;
 
-use arr;
-use err;
-use fix;
-use check;
-use retrieve;
+use hiapi\legacy\lib\deps\err;
 use hiapi\directi\DirectiTool;
 
 /**
