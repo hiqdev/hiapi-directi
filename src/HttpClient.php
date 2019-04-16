@@ -5,6 +5,7 @@ namespace hiapi\directi;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use hiapi\directi\exceptions\DirectiException;
+use hiapi\directi\exceptions\HttpClientException;
 use hiapi\directi\exceptions\ValidationException;
 use hiapi\legacy\lib\deps\check;
 use hiapi\legacy\lib\deps\err;
@@ -57,12 +58,16 @@ class HttpClient
 
     private function request (string $httpMethod, string $command, array $data): ?Response
     {
-        if (!strcasecmp($httpMethod, 'GET')) {
-            return $this->fetchGet($command, $data);
+        try {
+            if (!strcasecmp($httpMethod, 'GET')) {
+                return $this->fetchGet($command, $data);
+            } else if (!strcasecmp($httpMethod, 'POST')) {
+                return $this->fetchPost($command, $data);
+            }
+        } catch (\Throwable $e) {
+            throw new HttpClientException("failed $httpMethod request", 1, $e);
         }
-        else if (!strcasecmp($httpMethod, 'POST')) {
-            return $this->fetchPost($command, $data);
-        }
+
         return null;
     }
 
@@ -108,6 +113,7 @@ class HttpClient
                 'Content-Type' => 'application/x-www-form-urlencoded',
             ],
         ]);
+
         return $res;
     }
 };
