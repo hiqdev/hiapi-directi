@@ -10,7 +10,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
-    protected $testUri      = 'http://test.test/test';
+    protected $testUrl      = 'http://test.test/test';
     protected $authUserId   = '753669';
     protected $apiKey       = 'UiQJ1uQHVlMasbrPTZMQ2pFcKHeHfEPY';
     protected $customerId   = '19371930';
@@ -91,7 +91,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $tool = new DirectiTool($base, [
-            'url'           => $this->testUri,
+            'url'           => $this->testUrl,
             'login'         => $this->authUserId,
             'password'      => $this->apiKey,
             'customer_id'   => $this->customerId,

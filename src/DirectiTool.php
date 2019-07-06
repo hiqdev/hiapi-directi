@@ -30,9 +30,7 @@ use yii\base\InvalidCallException;
  */
 class DirectiTool extends \hiapi\components\AbstractTool
 {
-    private $uri = 'https://test.httpapi.com/api/';
-
-    protected $url;
+    protected $url = 'https://test.httpapi.com/api/';
     protected $login;
     protected $password;
     protected $customer_id;
@@ -162,7 +160,7 @@ class DirectiTool extends \hiapi\components\AbstractTool
     public function getHttpClient(): HttpClient
     {
         if ($this->httpClient === null) {
-            $guzzle = new \GuzzleHttp\Client(['base_uri' => $this->uri]);
+            $guzzle = new \GuzzleHttp\Client(['base_uri' => $this->url]);
             $this->httpClient = new HttpClient($guzzle);
         }
         return $this->httpClient;
