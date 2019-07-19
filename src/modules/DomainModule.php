@@ -73,6 +73,9 @@ class DomainModule extends AbstractModule
             'domain-name' => $row['domain-name'],
             'tlds'        => $row['tlds']
         ]);
+        foreach ($res as $domain => $check) {
+            $res[$domain] = $check['status'] === 'available' ? 1 : 0;
+        }
 
         return $res;
     }
