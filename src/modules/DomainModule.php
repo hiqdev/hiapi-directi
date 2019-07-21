@@ -134,8 +134,8 @@ class DomainModule extends AbstractModule
     }
 
     public function domainCheckTransfer($row)
-    { // check through evo@ahnames
-        return $this->base->getTool(3027237)->domainCheckTransfer($row);
+    {
+        return $row;
     }
 
     /**
