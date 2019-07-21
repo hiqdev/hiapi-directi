@@ -251,7 +251,7 @@ class DomainModule extends AbstractModule
             'exp-date'       => 'id',
 
         ], null, [
-            'invoice-option'    => 'KeepInvoice',
+            'invoice-option'    => 'NoInvoice',
         ]);
 
         return $res;
