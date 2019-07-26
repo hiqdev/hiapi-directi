@@ -10,6 +10,7 @@ use hiapi\directi\exceptions\ValidationException;
 use hiapi\legacy\lib\deps\check;
 use hiapi\legacy\lib\deps\err;
 use hiapi\legacy\lib\deps\fix;
+use GuzzleHttp\Exception\ServerException;
 
 class HttpClient
 {
@@ -64,8 +65,12 @@ class HttpClient
             } else if (!strcasecmp($httpMethod, 'POST')) {
                 return $this->fetchPost($command, $data);
             }
+        } catch (ServerException $e) {
+            $data = $this->parseGuzzleResponse($e->getResponse());
+
+            throw new DirectiException($data['message']);
         } catch (\Throwable $e) {
-            throw new HttpClientException("failed $httpMethod request", 1, $e);
+            throw new HttpClientException($e->getMessage(), 1, $e);
         }
 
         return null;
