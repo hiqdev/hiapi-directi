@@ -84,11 +84,22 @@ class HttpClient
     {
         $response = $guzzleResponse->getBody()->getContents();
         $response = json_decode($response, true);
-        if (is_array($response) && array_key_exists('error', $response)) {
-            throw new DirectiException($response['error']);
+        $error = $this->detectError($response);
+        if ($error) {
+            throw new DirectiException($error);
         }
 
         return $response;
+    }
+
+    private function detectError($response)
+    {
+        $error = $response['error'] ?? null;
+        if ($error && $error !== 'NoError') {
+            return $error;
+        }
+
+        return null;
     }
 
     /**
