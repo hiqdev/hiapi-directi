@@ -343,4 +343,43 @@ class DomainModule extends AbstractModule
     {
         return $this->base->_simple_domainSaveContacts($row);
     }
+
+    public function domainEnableWhoisProtect($row)
+    {
+        $this->domainSetWhoisProtect($row, true);
+    }
+
+    public function domainDisableWhoisProtect($row)
+    {
+        $this->domainSetWhoisProtect($row, false);
+    }
+
+    public function domainsEnableWhoisProtect($row)
+    {
+        $this->domainsSetWhoisProtect($row, true);
+    }
+
+    public function domainsDisableWhoisProtect($row)
+    {
+        $this->domainsSetWhoisProtect($row, false);
+    }
+
+    public function domainSetWhoisProtect($row, $enable = null)
+    {
+        $enable = $row['enable'] ?? $enable;
+        $row['protect-privacy'] = $row['enable'] ? 'true' : 'false';
+        $row['reason'] = $row['reason'] ?? 'on a client request';
+
+        return $this->post_orderid('domains/modify-privacy-protection', $row);
+    }
+
+    public function domainsSetWhoisProtect($rows, $enable = null)
+    {
+        $res = [];
+        foreach ($rows as $k=>$row) {
+            $res[$k] = $this->domainSetWhoisProtect($row, $enable);
+        }
+
+        return err::reduce($res);
+    }
 }
