@@ -14,6 +14,7 @@ use hiapi\legacy\lib\deps\arr;
 use hiapi\legacy\lib\deps\err;
 use hiapi\legacy\lib\deps\fix;
 use hiapi\legacy\lib\deps\format;
+use hiapi\directi\exceptions\DirectiException;
 
 /**
  * Domain operations.
@@ -144,7 +145,7 @@ class DomainModule extends AbstractModule
      */
     public function domainPrepareContacts(array $row): array
     {
-        $contacts = $this->base->domainGetWPContactsInfo($row);
+        $contacts = $this->base->domainGetContactsInfo($row);
         if (err::is($contacts)) {
             return $contacts;
         }
@@ -274,6 +275,7 @@ class DomainModule extends AbstractModule
      */
     public function domainSetContacts(array $row): array
     {
+        $res = $this->domainSetWhoisProtect($row, $row['whois_protected']);
         $res = $this->post_orderid('domains/modify-contact', $row, [
             'registrant_remoteid->reg-contact-id'   => 'id',
             'admin_remoteid->admin-contact-id'      => 'id',
@@ -341,7 +343,7 @@ class DomainModule extends AbstractModule
 
     public function domainSaveContacts($row)
     {
-        return $this->base->_simple_domainSaveContacts($row);
+        return $this->base->_simple_domainSaveContacts($row, false);
     }
 
     public function domainEnableWhoisProtect($row)
@@ -366,8 +368,29 @@ class DomainModule extends AbstractModule
 
     public function domainSetWhoisProtect($row, $enable = null)
     {
-        $enable = $row['enable'] ?? $enable;
-        $row['protect-privacy'] = $row['enable'] ? 'true' : 'false';
+        try {
+            $res = $this->_inner_domainSetWhoisProtect($row, $enable);
+        } catch (DirectiException $e) {
+            if ($e->getMessage() === 'Privacy Protection not Purchased') {
+                $this->domainPurchaseWhoisProtect($row);
+                $res = $this->_inner_domainSetWhoisProtect($row, $enable);
+            }
+        }
+
+        return $res;
+    }
+
+    public function domainPurchaseWhoisProtect($row)
+    {
+        $row['invoice-option'] = 'NoInvoice';
+
+        return $this->post_orderid('domains/purchase-privacy', $row);
+    }
+
+    private function _inner_domainSetWhoisProtect($row, $enable)
+    {
+        $enable = $enable ?? $row['enable'] ?? false;
+        $row['protect-privacy'] = $enable ? 'true' : 'false';
         $row['reason'] = $row['reason'] ?? 'on a client request';
 
         return $this->post_orderid('domains/modify-privacy-protection', $row);
