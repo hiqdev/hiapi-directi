@@ -10,6 +10,7 @@
 
 namespace hiapi\directi\modules;
 
+use hiapi\directi\DirectiTool;
 use hiapi\legacy\lib\deps\arr;
 use hiapi\legacy\lib\deps\err;
 use hiapi\legacy\lib\deps\fix;
@@ -22,6 +23,18 @@ use hiapi\legacy\lib\deps\format;
  */
 class DomainModule extends AbstractModule
 {
+
+    const STATE_OK = 'ok';
+    /**
+     * @var array
+     */
+    protected $statuses = [
+        'Active' => 'ok',
+        'transferlock' => 'clientTransferProhibited',
+        'renewhold' => 'autoRenewPeriod',
+        // TODO Add all statuses
+    ];
+
     /// domain
     /**
      * @param array $row
@@ -90,6 +103,10 @@ class DomainModule extends AbstractModule
             'domain-name'   => $row['domain'],
             'options'       => ['All'],
         ]);
+
+        if (err::is($data)) {
+            return $data;
+        }
         $res = fix::values([
             'orderid->id'                       => 'id',
             'domainname->domain'                => 'domain',
@@ -102,9 +119,8 @@ class DomainModule extends AbstractModule
         ], $data);
         $res['created_date'] = format::datetime($data['creationtime'],'iso');
         $res['expiration_date'] = format::datetime($data['endtime'],'iso');
-        if (err::is($data)) {
-            return $data;
-        }
+        $res['statuses_arr'] = $this->_fixStatuses($data);
+        $res['statuses'] = arr::cjoin($res['statuses_arr']);
         for ($i=1; $i <= 13; ++$i) {
             if ($data["ns$i"]) {
                 $nss[] = $data["ns$i"];
@@ -126,6 +142,7 @@ class DomainModule extends AbstractModule
         if (!err::is($res)) {
             return $res;
         }
+
         if (!$row['password'] && $row['id']) {
             $row = array_merge($row, $this->base->domainGetPassword($row));
         }
@@ -342,5 +359,24 @@ class DomainModule extends AbstractModule
     public function domainSaveContacts($row)
     {
         return $this->base->_simple_domainSaveContacts($row);
+    }
+
+    protected function _fixStatuses($data)
+    {
+        $statuses = [];
+        if (!empty($this->statuses[$data['currentstatus']])) {
+            $statuses[$this->statuses[$data['currentstatus']]] = $this->statuses[$data['currentstatus']];
+        }
+        foreach (['orderstatus', 'domainstatus'] as $type) {
+            foreach ($data[$type] as $status) {
+                if (empty($this->statuses[$status])) {
+                    continue;
+                }
+
+                $statuses[$this->statuses[$status]] = $this->statuses[$status];
+            }
+        }
+
+        return $statuses;
     }
 }

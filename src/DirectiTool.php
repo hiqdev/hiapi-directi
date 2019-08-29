@@ -30,6 +30,8 @@ use yii\base\InvalidCallException;
  */
 class DirectiTool extends \hiapi\components\AbstractTool
 {
+    public $data = [];
+
     protected $url = 'https://test.httpapi.com/api/';
     protected $login;
     protected $password;
