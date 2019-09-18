@@ -23,6 +23,10 @@ use hiapi\directi\exceptions\DirectiException;
  */
 class DomainModule extends AbstractModule
 {
+    const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
+    const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
+    const ACTION_IN_ORDER_ERROR = 'You have already added this action on this order.';
+    const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
     /// domain
     /**
      * @param array $row
@@ -99,6 +103,7 @@ class DomainModule extends AbstractModule
             'admincontactid->admin'             => 'id',
             'billingcontactid->billing'         => 'id',
             'techcontactid->tech'               => 'id',
+            'customerid->customer'              => 'id',
 
         ], $data);
         $res['created_date'] = format::datetime($data['creationtime'],'iso');
@@ -275,18 +280,30 @@ class DomainModule extends AbstractModule
      */
     public function domainSetContacts(array $row): array
     {
-        $res = $this->domainSetWhoisProtect($row, $row['whois_protected']);
-        $res = $this->post_orderid('domains/modify-contact', $row, [
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'      => 'id',
-            'tech_remoteid->tech-contact-id'        => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-        ],[
-            'entityid->id'          => 'id',
-            'description->domain'   => 'domain',
-        ]);
-        if (err::is($res) && $res['message'] === 'The Contacts selected are the same as the existing contacts') {
-            return arr::mget($row,'id,domain');
+        try {
+            $res = $this->domainSetWhoisProtect($row, $row['whois_protected']);
+        } catch (DirectiException $e) {
+            if (!in_array($e->getMessage(), [self::ACTION_IN_ORDER_ERROR, self::WHOIS_PROTECT_SERVICE_ERROR], true)) {
+                throw new DirectiException($e->getMessage());
+            }
+        }
+
+        try {
+            $res = $this->post_orderid('domains/modify-contact', $row, [
+                'registrant_remoteid->reg-contact-id'   => 'id',
+                'admin_remoteid->admin-contact-id'      => 'id',
+                'tech_remoteid->tech-contact-id'        => 'id',
+                'billing_remoteid->billing-contact-id'  => 'id',
+            ],[
+                'entityid->id'          => 'id',
+                'description->domain'   => 'domain',
+            ]);
+        } catch (DirectiException $e) {
+            if (in_array($e->getMessage(), [self::SAME_CONTACTS_ERROR, self::ACTION_PENDING_ERROR], true)) {
+                return arr::mget($row,'id,domain');
+            }
+
+            throw new DirectiException($e->getMessage());
         }
 
         return $res;
