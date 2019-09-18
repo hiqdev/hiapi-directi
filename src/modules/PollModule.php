@@ -22,9 +22,8 @@ class PollModule extends AbstractModule
     public function pollsGetNew($jrow)
     {
         foreach (['incoming', 'outgoing', 'expired'] as $state) {
-            $domains = $this->base->domainsSearch([
-                'limit' => 'ALL',
-                'state' => $state,
+            $domains = $this->base->domainsSearchForPolls([
+                'status' => $state,
                 'access_id' => $this->tool->data['id'],
             ]);
 

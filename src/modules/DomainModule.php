@@ -15,6 +15,7 @@ use hiapi\legacy\lib\deps\arr;
 use hiapi\legacy\lib\deps\err;
 use hiapi\legacy\lib\deps\fix;
 use hiapi\legacy\lib\deps\format;
+use hiapi\directi\exceptions\DirectiException;
 
 /**
  * Domain operations.
@@ -23,7 +24,6 @@ use hiapi\legacy\lib\deps\format;
  */
 class DomainModule extends AbstractModule
 {
-
     const STATE_OK = 'ok';
     /**
      * @var array
@@ -35,6 +35,10 @@ class DomainModule extends AbstractModule
         // TODO Add all statuses
     ];
 
+    const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
+    const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
+    const ACTION_IN_ORDER_ERROR = 'You have already added this action on this order.';
+    const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
     /// domain
     /**
      * @param array $row
@@ -115,6 +119,7 @@ class DomainModule extends AbstractModule
             'admincontactid->admin'             => 'id',
             'billingcontactid->billing'         => 'id',
             'techcontactid->tech'               => 'id',
+            'customerid->customer'              => 'id',
 
         ], $data);
         $res['created_date'] = format::datetime($data['creationtime'],'iso');
@@ -161,7 +166,7 @@ class DomainModule extends AbstractModule
      */
     public function domainPrepareContacts(array $row): array
     {
-        $contacts = $this->base->domainGetWPContactsInfo($row);
+        $contacts = $this->base->domainGetContactsInfo($row);
         if (err::is($contacts)) {
             return $contacts;
         }
@@ -291,17 +296,30 @@ class DomainModule extends AbstractModule
      */
     public function domainSetContacts(array $row): array
     {
-        $res = $this->post_orderid('domains/modify-contact', $row, [
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'      => 'id',
-            'tech_remoteid->tech-contact-id'        => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-        ],[
-            'entityid->id'          => 'id',
-            'description->domain'   => 'domain',
-        ]);
-        if (err::is($res) && $res['message'] === 'The Contacts selected are the same as the existing contacts') {
-            return arr::mget($row,'id,domain');
+        try {
+            $res = $this->domainSetWhoisProtect($row, $row['whois_protected']);
+        } catch (DirectiException $e) {
+            if (!in_array($e->getMessage(), [self::ACTION_IN_ORDER_ERROR, self::WHOIS_PROTECT_SERVICE_ERROR], true)) {
+                throw new DirectiException($e->getMessage());
+            }
+        }
+
+        try {
+            $res = $this->post_orderid('domains/modify-contact', $row, [
+                'registrant_remoteid->reg-contact-id'   => 'id',
+                'admin_remoteid->admin-contact-id'      => 'id',
+                'tech_remoteid->tech-contact-id'        => 'id',
+                'billing_remoteid->billing-contact-id'  => 'id',
+            ],[
+                'entityid->id'          => 'id',
+                'description->domain'   => 'domain',
+            ]);
+        } catch (DirectiException $e) {
+            if (in_array($e->getMessage(), [self::SAME_CONTACTS_ERROR, self::ACTION_PENDING_ERROR], true)) {
+                return arr::mget($row,'id,domain');
+            }
+
+            throw new DirectiException($e->getMessage());
         }
 
         return $res;
@@ -358,7 +376,67 @@ class DomainModule extends AbstractModule
 
     public function domainSaveContacts($row)
     {
-        return $this->base->_simple_domainSaveContacts($row);
+        return $this->base->_simple_domainSaveContacts($row, false);
+    }
+
+    public function domainEnableWhoisProtect($row)
+    {
+        return $this->domainSetWhoisProtect($row, true);
+    }
+
+    public function domainDisableWhoisProtect($row)
+    {
+        return $this->domainSetWhoisProtect($row, false);
+    }
+
+    public function domainsEnableWhoisProtect($row)
+    {
+        return $this->domainsSetWhoisProtect($row, true);
+    }
+
+    public function domainsDisableWhoisProtect($row)
+    {
+        return $this->domainsSetWhoisProtect($row, false);
+    }
+
+    public function domainSetWhoisProtect($row, $enable = null)
+    {
+        try {
+            $res = $this->_inner_domainSetWhoisProtect($row, $enable);
+        } catch (DirectiException $e) {
+            if ($e->getMessage() === 'Privacy Protection not Purchased') {
+                $this->domainPurchaseWhoisProtect($row);
+                $res = $this->_inner_domainSetWhoisProtect($row, $enable);
+            }
+        }
+
+        return $res;
+    }
+
+    public function domainPurchaseWhoisProtect($row)
+    {
+        $row['invoice-option'] = 'NoInvoice';
+
+        return $this->post_orderid('domains/purchase-privacy', $row);
+    }
+
+    private function _inner_domainSetWhoisProtect($row, $enable)
+    {
+        $enable = $enable ?? $row['enable'] ?? false;
+        $row['protect-privacy'] = $enable ? 'true' : 'false';
+        $row['reason'] = $row['reason'] ?? 'on a client request';
+
+        return $this->post_orderid('domains/modify-privacy-protection', $row);
+    }
+
+    public function domainsSetWhoisProtect($rows, $enable = null)
+    {
+        $res = [];
+        foreach ($rows as $k=>$row) {
+            $res[$k] = $this->domainSetWhoisProtect($row, $enable);
+        }
+
+        return err::reduce($res);
     }
 
     protected function _fixStatuses($data)
