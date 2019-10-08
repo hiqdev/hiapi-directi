@@ -32,6 +32,7 @@ class DomainModule extends AbstractModule
         'Active' => 'ok',
         'transferlock' => 'clientTransferProhibited',
         'renewhold' => 'autoRenewPeriod',
+        'Pending Delete Restorable' => 'redemptionPeriod,pendingDelete',
         // TODO Add all statuses
     ];
 
@@ -111,6 +112,7 @@ class DomainModule extends AbstractModule
         if (err::is($data)) {
             return $data;
         }
+
         $res = fix::values([
             'orderid->id'                       => 'id',
             'domainname->domain'                => 'domain',

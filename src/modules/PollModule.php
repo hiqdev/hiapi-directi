@@ -23,7 +23,7 @@ class PollModule extends AbstractModule
     {
         foreach (['incoming', 'outgoing', 'expired'] as $state) {
             $domains = $this->base->domainsSearchForPolls([
-                'status' => $state,
+                'status' => $state === 'expired' ? 'checked4deleting' : $state,
                 'access_id' => $this->tool->data['id'],
             ]);
 
