@@ -10,6 +10,7 @@
 
 namespace hiapi\directi\modules;
 
+use hiapi\directi\DirectiTool;
 use hiapi\legacy\lib\deps\arr;
 use hiapi\legacy\lib\deps\err;
 use hiapi\legacy\lib\deps\fix;
@@ -23,6 +24,22 @@ use hiapi\directi\exceptions\DirectiException;
  */
 class DomainModule extends AbstractModule
 {
+    const STATE_OK = 'ok';
+    /**
+     * @var array
+     */
+    protected $statuses = [
+        'Active' => 'ok',
+        'transferlock' => 'clientTransferProhibited',
+        'renewhold' => 'autoRenewPeriod',
+        'Pending Delete Restorable' => 'redemptionPeriod,pendingDelete',
+        // TODO Add all statuses
+    ];
+
+    const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
+    const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
+    const ACTION_IN_ORDER_ERROR = 'You have already added this action on this order.';
+    const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
     /// domain
     /**
      * @param array $row
@@ -91,6 +108,11 @@ class DomainModule extends AbstractModule
             'domain-name'   => $row['domain'],
             'options'       => ['All'],
         ]);
+
+        if (err::is($data)) {
+            return $data;
+        }
+
         $res = fix::values([
             'orderid->id'                       => 'id',
             'domainname->domain'                => 'domain',
@@ -99,13 +121,14 @@ class DomainModule extends AbstractModule
             'admincontactid->admin'             => 'id',
             'billingcontactid->billing'         => 'id',
             'techcontactid->tech'               => 'id',
+            'customerid->customer'              => 'id',
 
         ], $data);
         $res['created_date'] = format::datetime($data['creationtime'],'iso');
         $res['expiration_date'] = format::datetime($data['endtime'],'iso');
-        if (err::is($data)) {
-            return $data;
-        }
+        $res['statuses_arr'] = $this->_fixStatuses($data);
+        $res['statuses'] = arr::cjoin($res['statuses_arr']);
+        $res['hosts'] = $data['cns'];
         for ($i=1; $i <= 13; ++$i) {
             if ($data["ns$i"]) {
                 $nss[] = $data["ns$i"];
@@ -127,6 +150,7 @@ class DomainModule extends AbstractModule
         if (!err::is($res)) {
             return $res;
         }
+
         if (!$row['password'] && $row['id']) {
             $row = array_merge($row, $this->base->domainGetPassword($row));
         }
@@ -275,18 +299,30 @@ class DomainModule extends AbstractModule
      */
     public function domainSetContacts(array $row): array
     {
-        $res = $this->domainSetWhoisProtect($row, $row['whois_protected']);
-        $res = $this->post_orderid('domains/modify-contact', $row, [
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'      => 'id',
-            'tech_remoteid->tech-contact-id'        => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-        ],[
-            'entityid->id'          => 'id',
-            'description->domain'   => 'domain',
-        ]);
-        if (err::is($res) && $res['message'] === 'The Contacts selected are the same as the existing contacts') {
-            return arr::mget($row,'id,domain');
+        try {
+            $res = $this->domainSetWhoisProtect($row, $row['whois_protected']);
+        } catch (DirectiException $e) {
+            if (!in_array($e->getMessage(), [self::ACTION_IN_ORDER_ERROR, self::WHOIS_PROTECT_SERVICE_ERROR], true)) {
+                throw new DirectiException($e->getMessage());
+            }
+        }
+
+        try {
+            $res = $this->post_orderid('domains/modify-contact', $row, [
+                'registrant_remoteid->reg-contact-id'   => 'id',
+                'admin_remoteid->admin-contact-id'      => 'id',
+                'tech_remoteid->tech-contact-id'        => 'id',
+                'billing_remoteid->billing-contact-id'  => 'id',
+            ],[
+                'entityid->id'          => 'id',
+                'description->domain'   => 'domain',
+            ]);
+        } catch (DirectiException $e) {
+            if (in_array($e->getMessage(), [self::SAME_CONTACTS_ERROR, self::ACTION_PENDING_ERROR], true)) {
+                return arr::mget($row,'id,domain');
+            }
+
+            throw new DirectiException($e->getMessage());
         }
 
         return $res;
@@ -348,22 +384,22 @@ class DomainModule extends AbstractModule
 
     public function domainEnableWhoisProtect($row)
     {
-        $this->domainSetWhoisProtect($row, true);
+        return $this->domainSetWhoisProtect($row, true);
     }
 
     public function domainDisableWhoisProtect($row)
     {
-        $this->domainSetWhoisProtect($row, false);
+        return $this->domainSetWhoisProtect($row, false);
     }
 
     public function domainsEnableWhoisProtect($row)
     {
-        $this->domainsSetWhoisProtect($row, true);
+        return $this->domainsSetWhoisProtect($row, true);
     }
 
     public function domainsDisableWhoisProtect($row)
     {
-        $this->domainsSetWhoisProtect($row, false);
+        return $this->domainsSetWhoisProtect($row, false);
     }
 
     public function domainSetWhoisProtect($row, $enable = null)
@@ -404,5 +440,24 @@ class DomainModule extends AbstractModule
         }
 
         return err::reduce($res);
+    }
+
+    protected function _fixStatuses($data)
+    {
+        $statuses = [];
+        if (!empty($this->statuses[$data['currentstatus']])) {
+            $statuses[$this->statuses[$data['currentstatus']]] = $this->statuses[$data['currentstatus']];
+        }
+        foreach (['orderstatus', 'domainstatus'] as $type) {
+            foreach ($data[$type] as $status) {
+                if (empty($this->statuses[$status])) {
+                    continue;
+                }
+
+                $statuses[$this->statuses[$status]] = $this->statuses[$status];
+            }
+        }
+
+        return $statuses;
     }
 }

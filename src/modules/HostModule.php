@@ -10,6 +10,8 @@
 
 namespace hiapi\directi\modules;
 
+use hiapi\legacy\lib\deps\err;
+
 /**
  * Host operations.
  *
@@ -17,9 +19,23 @@ namespace hiapi\directi\modules;
  */
 class HostModule extends AbstractModule
 {
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainGetId(array $row): array
+    {
+        $id = $this->get('domains/orderid', $row, [
+            'domain->domain-name'       => 'domain,*',
+        ]);
+
+        return err::is($id) ? $id : compact('id');
+    }
+
     public function hostSet($row)
     {
-        return $this->hostCreate($row);
+        $r = $this->tool->domainInfo($row);
+        return isset($r['hosts'][$row['host']]) ? $this->hostUpdate(array_merge($row, $r)) : $this->hostCreate($row);
     }
 
     public function hostCreate($row)
@@ -28,5 +44,51 @@ class HostModule extends AbstractModule
             'host->cns'         => 'ns',
             'ips->ip'           => 'ips',
         ]);
+    }
+
+    public function hostUpdate($row)
+    {
+        $old = $row['hosts'][$row['host']];
+        for ($i = 0; $i < count($old) - 1; $i++) {
+            $res[] = $this->post_orderid('domains/delete-cns-ip', [
+                'host' => $row['host'],
+                'ips' => [ $old[$i] ],
+                'id' => $row['id'],
+                'domain' => $row['domain'],
+            ], [
+                'host->cns'         => 'ns',
+                'ips->ip'           => 'ips',
+            ]);
+        }
+
+        $change = $old[count($old) - 1];
+        for ($i = 0; $i < count($row['ips']); $i++) {
+            $data = [
+                'id' => $row['id'],
+                'domain' => $row['domain'],
+                'ips' => $row['ips'][$i],
+                'host' => $row['host'],
+            ];
+
+            if ($data['ips'] === $change) {
+                continue;
+            }
+
+            if ($i > 0) {
+                $res[] = $this->hostCreate($data);
+                continue;
+            }
+
+
+            $data['old-ip'] = [ $change ];
+
+            $res[] = $this->post_orderid('domains/modify-cns-ip', $data, [
+                'host->cns'         => 'ns',
+                'ips->new-ip'       => 'ips',
+                'old-ip->old-ip'    => 'ips',
+            ]);
+        }
+
+        return $row;
     }
 }

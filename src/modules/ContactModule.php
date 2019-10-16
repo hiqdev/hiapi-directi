@@ -35,8 +35,9 @@ class ContactModule extends AbstractModule
         $data = $this->get('contacts/search',$row,[
             'name'              => 'label',
             'email'             => 'email',
+            'domain'            => 'domain',
         ],[],[
-            'customer-id'       => $this->tool->getCustomerId(),
+            'customer-id'       => $this->contactGetCustomerID($row),
             'no-of-records'     => 10,
             'page-no'           => 1,
         ]);
@@ -59,7 +60,7 @@ class ContactModule extends AbstractModule
             null,
             null, [
             'type'          => 'Contact',
-            'customer-id'   => $this->tool->getCustomerId(),
+            'customer-id'   => $this->contactGetCustomerID($row),
         ]);
 
         return compact('id');
@@ -67,12 +68,7 @@ class ContactModule extends AbstractModule
 
     public function contactUpdate($row)
     {
-        return $this->post('contacts/modify', $this->contactPrepare($row), null, [
-            'entityid->id'      => 'id',
-        ],[
-            'customer-id'       => $this->tool->getCustomerId(),
-            'type'              => 'Contact',
-        ]);
+        return $this->contactCreate($row);
     }
 
     public function contactPrepare($row)
@@ -108,5 +104,18 @@ class ContactModule extends AbstractModule
             'fax-cc'                    => 'digits',
             'fax'                       => 'digits',
         ], $row);
+    }
+
+    public function contactGetCustomerID($row)
+    {
+        if (empty($row['domain'])) {
+            return $this->tool->getCustomerId();
+        }
+
+        $info = $this->tool->domainInfo([
+            'domain' => $row['domain'],
+        ]);
+
+        return $info['customer'] ?? $this->tool->getCustomerId();
     }
 }
