@@ -34,7 +34,8 @@ class HostModule extends AbstractModule
 
     public function hostSet($row)
     {
-        return $this->hostCreate($row);
+        $r = $this->tool->domainInfo($row);
+        return isset($r['cns'][$row['host']]) ? $this->hostUpdate(array_merge($row, $r)) : $this->hostCreate($row);
     }
 
     public function hostCreate($row)
@@ -43,5 +44,52 @@ class HostModule extends AbstractModule
             'host->cns'         => 'ns',
             'ips->ip'           => 'ips',
         ]);
+    }
+
+    public function hostUpdate($row)
+    {
+        $old = $row['cns'][$row['host']];
+        for ($i = 0; $i < count($old) - 1; $i++) {
+            $res[] = $this->post_orderid('domains/delete-cns-ip', [
+                'host' => $row['host'],
+                'ips' => [ $old[$i] ],
+                'id' => $row['id'],
+                'domain' => $row['domain'],
+            ], [
+                'host->cns'         => 'ns',
+                'ips->ip'           => 'ips',
+            ]);
+        }
+
+        $change = $old[count($old) - 1];
+
+        for ($i = 0; $i < count($row['ips']) - 1; $i++) {
+            $data = [
+                'id' => $row['id'],
+                'domain' => $row['domain'],
+                'ips' => $row['ips'][$i],
+                'host' => $row['host'],
+            ];
+
+            if ($data['ips'] === $change) {
+                continue;
+            }
+
+            if ($i > 0) {
+                $res[] = $this->hostCreate($data);
+                continue;
+            }
+
+
+            $data['old-ip'] = [ $change ];
+
+            $res[] = $this->post_orderid('domains/modify-cns-ip', $data, [
+                'host->cns'         => 'ns',
+                'ips->new-ip'       => 'ips',
+                'old-ip->old-ip'    => 'ips',
+            ]);
+        }
+
+        return $row;
     }
 }

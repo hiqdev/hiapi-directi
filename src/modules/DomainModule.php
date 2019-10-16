@@ -128,6 +128,7 @@ class DomainModule extends AbstractModule
         $res['expiration_date'] = format::datetime($data['endtime'],'iso');
         $res['statuses_arr'] = $this->_fixStatuses($data);
         $res['statuses'] = arr::cjoin($res['statuses_arr']);
+        $res['cns'] = $data['cns'];
         for ($i=1; $i <= 13; ++$i) {
             if ($data["ns$i"]) {
                 $nss[] = $data["ns$i"];

@@ -66,9 +66,8 @@ class HttpClient
                 return $this->fetchPost($command, $data);
             }
         } catch (ServerException $e) {
-            $data = $this->parseGuzzleResponse($e->getResponse());
-
-            throw new DirectiException($data['message']);
+            $res = $this->parseGuzzleResponse($e->getResponse());
+            throw new DirectiException($res['message']);
         } catch (\Throwable $e) {
             throw new HttpClientException($e->getMessage(), 1, $e);
         }
