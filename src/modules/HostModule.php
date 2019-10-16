@@ -48,7 +48,7 @@ class HostModule extends AbstractModule
 
     public function hostUpdate($row)
     {
-        $old = $row['cns'][$row['host']];
+        $old = $row['hosts'][$row['host']];
         for ($i = 0; $i < count($old) - 1; $i++) {
             $res[] = $this->post_orderid('domains/delete-cns-ip', [
                 'host' => $row['host'],
@@ -62,8 +62,6 @@ class HostModule extends AbstractModule
         }
 
         $change = $old[count($old) - 1];
-
-
         for ($i = 0; $i < count($row['ips']); $i++) {
             $data = [
                 'id' => $row['id'],
