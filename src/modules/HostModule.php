@@ -35,7 +35,7 @@ class HostModule extends AbstractModule
     public function hostSet($row)
     {
         $r = $this->tool->domainInfo($row);
-        return isset($r['cns'][$row['host']]) ? $this->hostUpdate(array_merge($row, $r)) : $this->hostCreate($row);
+        return isset($r['hosts'][$row['host']]) ? $this->hostUpdate(array_merge($row, $r)) : $this->hostCreate($row);
     }
 
     public function hostCreate($row)
