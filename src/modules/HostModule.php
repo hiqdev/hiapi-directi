@@ -63,7 +63,8 @@ class HostModule extends AbstractModule
 
         $change = $old[count($old) - 1];
 
-        for ($i = 0; $i < count($row['ips']) - 1; $i++) {
+
+        for ($i = 0; $i < count($row['ips']); $i++) {
             $data = [
                 'id' => $row['id'],
                 'domain' => $row['domain'],
