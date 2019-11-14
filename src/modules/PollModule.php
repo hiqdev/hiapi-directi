@@ -21,9 +21,10 @@ class PollModule extends AbstractModule
 {
     public function pollsGetNew($jrow)
     {
-        foreach (['incoming', 'outgoing', 'expired'] as $state) {
+        $polls = [];
+        foreach (['incoming', 'outgoing', 'expired', 'deleting'] as $state) {
             $domains = $this->base->domainsSearchForPolls([
-                'status' => $state === 'expired' ? 'checked4deleting' : $state,
+                'status' => $state === 'deleting' ? 'checked4deleting' : $state,
                 'access_id' => $this->tool->data['id'],
             ]);
 
@@ -37,12 +38,16 @@ class PollModule extends AbstractModule
         return empty($polls) ? true : $polls;
     }
 
-    protected function _pollsGetTransferMessage($polls = [], $domains = []) : array
+    protected function _pollsGetIncomingMessage($polls = [], $domains = []) : array
     {
+        if (empty($domains)) {
+            return $polls;
+        }
+
         foreach ($domains as $id => $domain) {
             $info = $this->base->domainInfo($domain);
 
-            if (err::is($info) && strpos(err::get($info), "Website doesn't exist for {$domain['domain']}") !== false) {
+            if (err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false) {
                 $polls[] = $this->_pollBuild($domain, [
                     'type' => 'clientRejected',
                     'message' => 'Transfer rejected',
@@ -64,10 +69,14 @@ class PollModule extends AbstractModule
 
     protected function _pollsGetOutgoingMessage($polls = [], $domains) : array
     {
+        if (empty($domains)) {
+            return $polls;
+        }
+
         foreach ($domains as $id => $domain) {
             $info = $this->base->domainInfo($domain);
 
-            if (err::is($info) && strpos(err::get($info), "Website doesn't exist for {$domain['domain']}") !== false) {
+            if (err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false) {
                 $polls[] = $this->_pollBuild($domain, [
                     'type' => 'serverApproved',
                     'message' => 'Transfer approved',
@@ -78,18 +87,54 @@ class PollModule extends AbstractModule
         return $polls;
     }
 
-    protected function _pollsGetDeleteMessage($polls = [], $domains) : array
+    public function _pollsGetExpiredMessage($polls = [], $domains = []) : array
     {
-        foreach ($domains as $id => $domain) {
-            $info = $this->base->domainInfo($domain);
+        if (empty($domains)) {
+            return $polls;
+        }
 
-            if (err::is($info) && strpos(err::get($info), "Website doesn't exist for {$domain['domain']}") !== false) {
-                // TODO CHANGE DOMAIN STATE
+        foreach ($domains as $domain) {
+            $info = $this->base->domainInfo($domain);
+            $error = err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false;
+            if ($error || strpos($info['statuses'], 'pendingDelete') !== false) {
+                $this->_setState($domain, DomainModule::STATE_DELETING);
+            }
+
+            if ($error) {
+                $polls[] = $this->_pollSetDeletedMessage($domain);
             }
         }
 
         return $polls;
+    }
 
+    protected function _pollsGetDeletingMessage($polls = [], $domains) : array
+    {
+        if (empty($domains)) {
+            return $polls;
+        }
+
+        foreach ($domains as $id => $domain) {
+            $info = $this->base->domainInfo($domain);
+            if (err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false) {
+                $polls[] = $this->_pollSetDeletedMessage($domain);
+            }
+        }
+
+        return $polls;
+    }
+
+    private function _setState(array $domain, string $state)
+    {
+        $this->base->domainSetStateInDb(array_merge($domain, ['state' => $state]));
+    }
+
+    private function _pollSetDeletedMessage(array $domain) : array
+    {
+        return $this->_pollBuild($domain, [
+            'type' => 'pendingDelete',
+            'message' => 'domain deleted',
+        ], false);
     }
 
     private function _pollBuild($row, $data, $outgoing = false) : array
