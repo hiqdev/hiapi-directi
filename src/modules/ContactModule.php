@@ -22,6 +22,10 @@ use hiapi\legacy\lib\deps\retrieve;
  */
 class ContactModule extends AbstractModule
 {
+
+    const ORGANISATION_NOT_APPLICABLE = 'Not Applicable';
+    const ORGANISATION_NA = 'N/A';
+
     public function contactSet($row)
     {
         $info = $this->contactGetId($row);
@@ -68,6 +72,10 @@ class ContactModule extends AbstractModule
 
     public function contactUpdate($row)
     {
+        if ($this->_checkIsSame($row)) {
+            return $row;
+        }
+
         return $this->contactCreate($row);
     }
 
@@ -84,7 +92,7 @@ class ContactModule extends AbstractModule
             $row['fax'] = substr($fax,strlen($cc));
         }
         if (!$row['organization']) {
-            $row['organization'] = 'Not Applicable';
+            $row['organization'] = self::ORGANISATION_NOT_APPLICABLE;
         }
 
         return check::values([
@@ -106,6 +114,28 @@ class ContactModule extends AbstractModule
         ], $row);
     }
 
+    public function contactParse($row)
+    {
+        return fix::values([
+            'entityid->contact-id'=> 'id',
+            'name'              => 'label',
+            'company'           => 'label',
+            'emailaddr->email'  => 'email',
+            'address1->address-line-1' => 'label',
+            'address2->address-line-2' => 'label',
+            'address3->address-line-3' => 'label',
+            'city'              => 'label',
+            'zip->zipcode'      => 'label',
+            'state'             => 'label',
+            'country'           => 'label',
+            'telnocc->phone-cc' => 'digits',
+            'telno->phone'      => 'digits',
+            'faxnocc->faxcc'    => 'digits',
+            'faxno->fax'        => 'digits',
+        ], $row);
+
+    }
+
     public function contactGetCustomerID($row)
     {
         if (empty($row['domain'])) {
@@ -117,5 +147,39 @@ class ContactModule extends AbstractModule
         ]);
 
         return $info['customer'] ?? $this->tool->getCustomerId();
+    }
+
+    protected function _checkIsSame(array $row) : bool
+    {
+        $new = $this->contactPrepare($row);
+        $data = $this->get('contacts/details', [
+            'contact-id' => $row['id'],
+        ]);
+        $res = $this->contactParse($data);
+
+        foreach ($new as $key => $value) {
+            if (in_array($key, ['fax-cc', 'fax'], true)) {
+                continue;
+            }
+
+            if ($value == $res[$key]) {
+                continue;
+            }
+
+            if ($key === 'company') {
+                if ($this->isEmptyCompany($value) && $this->isEmptyCompany($res[$key])) {
+                    continue;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function isEmptyCompany($org)
+    {
+        return in_array($org, [self::ORGANISATION_NOT_APPLICABLE, self::ORGANISATION_NA], true);
     }
 }
