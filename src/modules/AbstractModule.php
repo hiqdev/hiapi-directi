@@ -84,4 +84,20 @@ class AbstractModule
             $returns,
             ['order-id'=>$res['id']]);
     }
+
+    /// domain
+    /**
+     * @param array $row
+     * @return array
+     */
+    public function domainGetId(array $row): array
+    {
+        $id = $this->get('domains/orderid', $row, [
+            'domain->domain-name'       => 'domain,*',
+        ]);
+
+        return err::is($id) ? $id : compact('id');
+    }
+
+
 }
