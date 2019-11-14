@@ -24,7 +24,18 @@ use hiapi\directi\exceptions\DirectiException;
  */
 class DomainModule extends AbstractModule
 {
+    /** @const state */
     const STATE_OK = 'ok';
+    const STATE_DELETING = 'deleting';
+
+    /** const error messages */
+    const OBJECT_DOES_NOT_EXIST = 'Object does not exist';
+    const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
+    const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
+    const ACTION_IN_ORDER_ERROR = 'You have already added this action on this order.';
+    const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
+    const WHOIS_PROTECT_NOT_PURCHASED = 'Privacy Protection not Purchased';
+
     /**
      * @var array
      */
@@ -35,24 +46,6 @@ class DomainModule extends AbstractModule
         'Pending Delete Restorable' => 'redemptionPeriod,pendingDelete',
         // TODO Add all statuses
     ];
-
-    const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
-    const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
-    const ACTION_IN_ORDER_ERROR = 'You have already added this action on this order.';
-    const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
-    /// domain
-    /**
-     * @param array $row
-     * @return array
-     */
-    public function domainGetId(array $row): array
-    {
-        $id = $this->get('domains/orderid', $row, [
-            'domain->domain-name'       => 'domain,*',
-        ]);
-
-        return err::is($id) ? $id : compact('id');
-    }
 
     /**
      * @param array $row
@@ -104,10 +97,16 @@ class DomainModule extends AbstractModule
      */
     public function _domainInfo(array $row): array
     {
-        $data = $this->get('domains/details-by-name',[
-            'domain-name'   => $row['domain'],
-            'options'       => ['All'],
-        ]);
+        try {
+            $data = $this->get('domains/details-by-name',[
+                'domain-name'   => $row['domain'],
+                'options'       => ['All'],
+            ]);
+        } catch (DirectiException $e) {
+            if (strpos($e->getMessage(), "Website doesn't exist for {$row['domain']}") !== false) {
+                throw new DirectiException(self::OBJECT_DOES_NOT_EXIST);
+            }
+        }
 
         if (err::is($data)) {
             return $data;
@@ -129,6 +128,11 @@ class DomainModule extends AbstractModule
         $res['statuses_arr'] = $this->_fixStatuses($data);
         $res['statuses'] = arr::cjoin($res['statuses_arr']);
         $res['hosts'] = $data['cns'];
+        if ($data['privacyprotectendtime']) {
+            $res['wp_purchased'] = (int) $data['privacyprotectendtime'] >= time();
+        }
+
+        $res['wp_enabled'] = $data['isprivacyprotected'] === 'true';
         for ($i=1; $i <= 13; ++$i) {
             if ($data["ns$i"]) {
                 $nss[] = $data["ns$i"];
@@ -222,7 +226,7 @@ class DomainModule extends AbstractModule
             'description->domain'   => 'domain',
         ],[
             'customer-id'       => $this->tool->getCustomerId(),
-            'invoice-option'    => 'KeepInvoice',
+            'invoice-option'    => 'NoInvoice',
             'protect-privacy'   => 'false',
         ]);
 
@@ -404,16 +408,19 @@ class DomainModule extends AbstractModule
 
     public function domainSetWhoisProtect($row, $enable = null)
     {
-        try {
-            $res = $this->_inner_domainSetWhoisProtect($row, $enable);
-        } catch (DirectiException $e) {
-            if ($e->getMessage() === 'Privacy Protection not Purchased') {
-                $this->domainPurchaseWhoisProtect($row);
-                $res = $this->_inner_domainSetWhoisProtect($row, $enable);
-            }
+        $row['enable'] = $row['enable'] ?? $row['whois_protected'] ?? false;
+        $enable = $enable ?? $row['enable'] ?? false;
+        $info = $this->tool->domainInfo($row);
+
+        if ($this->_isWPNeadPurchase($info, $enable)) {
+            $this->domainPurchaseWhoisProtect($row);
         }
 
-        return $res;
+        if ($this->_isWPNeadSet($info, $enable)) {
+            $this->_inner_domainSetWhoisProtect($row, $enable);
+        }
+
+        return $row;
     }
 
     public function domainPurchaseWhoisProtect($row)
@@ -459,5 +466,18 @@ class DomainModule extends AbstractModule
         }
 
         return $statuses;
+    }
+
+    protected function _isWPNeadPurchase(array $data, bool $enable) : bool
+    {
+        $neadEnable = !$data['wp_purchased'] && $enable;
+        $neadDisable = $data['wp_enabled'] && !($data['wp_purchased'] || $enable);
+
+        return $neadEnable || $neadDisable;
+    }
+
+    protected function _isWPNeadSet(array $data, bool $enable) : bool
+    {
+        return $data['wp_enabled'] != $enable;
     }
 }
