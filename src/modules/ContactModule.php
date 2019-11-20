@@ -26,6 +26,16 @@ class ContactModule extends AbstractModule
     const ORGANISATION_NOT_APPLICABLE = 'Not Applicable';
     const ORGANISATION_NA = 'N/A';
 
+    public function contactInfo($row)
+    {
+        $data = $this->get('contacts/details', [
+            'contact-id' => $row['id'],
+        ]);
+
+        return $this->contactParse($data);
+
+    }
+
     public function contactSet($row)
     {
         $info = $this->contactGetId($row);
@@ -116,24 +126,33 @@ class ContactModule extends AbstractModule
 
     public function contactParse($row)
     {
-        return fix::values([
-            'entityid->contact-id'=> 'id',
-            'name'              => 'label',
-            'company'           => 'label',
-            'emailaddr->email'  => 'email',
-            'address1->address-line-1' => 'label',
-            'address2->address-line-2' => 'label',
-            'address3->address-line-3' => 'label',
-            'city'              => 'label',
-            'zip->zipcode'      => 'label',
-            'state'             => 'label',
-            'country'           => 'label',
-            'telnocc->phone-cc' => 'digits',
-            'telno->phone'      => 'digits',
-            'faxnocc->faxcc'    => 'digits',
-            'faxno->fax'        => 'digits',
+        $data = check::values([
+            'entityid->id'          => 'id',
+            'name'                  => 'label',
+            'company->organization' => 'label',
+            'emailaddr->email'      => 'email',
+            'address1->street1'     => 'label',
+            'address2->street2'     => 'label',
+            'address3->street3'     => 'label',
+            'city'                  => 'label',
+            'zip->postal_code'      => 'label',
+            'state->province'       => 'label',
+            'country'               => 'lc,ref',
+            'telnocc->phone-cc'     => 'digits',
+            'telno->phone'          => 'digits',
+            'faxnocc->fax-cc'       => 'digits',
+            'faxno->fax'            => 'digits',
         ], $row);
+        if ($this->isEmptyCompany($data['organization'])) {
+            $data['organization'] = '';
+        }
 
+        $data['voice_phone'] = fix::phone($data['phone-cc'] . $data['phone']);
+        $data['fax_phone'] = fix::phone($data['fax-cc'] . $data['fax']);
+        [$data['first_name'], $data['last_name']] = explode(" ", $data['name'], 2);
+        unset($data['phone-cc'], $data['phone'], $data['fax-cc'], $data['fax']);
+
+        return $data;
     }
 
     public function contactGetCustomerID($row)
@@ -152,10 +171,7 @@ class ContactModule extends AbstractModule
     protected function _checkIsSame(array $row) : bool
     {
         $new = $this->contactPrepare($row);
-        $data = $this->get('contacts/details', [
-            'contact-id' => $row['id'],
-        ]);
-        $res = $this->contactParse($data);
+        $res = $this->contactPrepare($this->contactInfo($row));
 
         foreach ($new as $key => $value) {
             if (in_array($key, ['fax-cc', 'fax'], true)) {
