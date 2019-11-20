@@ -10,6 +10,7 @@
 
 namespace hiapi\directi\modules;
 
+use hiapi\directi\exceptions\DirectiException;
 use hiapi\legacy\lib\deps\err;
 
 /**
@@ -19,76 +20,116 @@ use hiapi\legacy\lib\deps\err;
  */
 class HostModule extends AbstractModule
 {
-    /**
-     * @param array $row
-     * @return array
-     */
-    public function domainGetId(array $row): array
+    public function hostInfo(array $row)
     {
-        $id = $this->get('domains/orderid', $row, [
-            'domain->domain-name'       => 'domain,*',
-        ]);
-
-        return err::is($id) ? $id : compact('id');
+        $data = $this->base->hostGetInfo($row);
+        return err::is($data)
+            ? $this->_hostInfo($row)
+            : $this->_hostInfo(array_merge($data, $row));
     }
 
-    public function hostSet($row)
+    public function hostSet(array $row) : array
     {
-        $r = $this->tool->domainInfo($row);
-        return isset($r['hosts'][$row['host']]) ? $this->hostUpdate(array_merge($row, $r)) : $this->hostCreate($row);
+        $data = $this->hostInfo($row);
+        return $data['exists'] === 1 ? $this->hostUpdate($data) : $this->hostCreate($data);
     }
 
-    public function hostCreate($row)
+    public function hostCreate(array $row) : array
     {
-        return $this->post_orderid('domains/add-cns',$row,[
+        return $this->post_orderid('domains/add-cns',$row, [
             'host->cns'         => 'ns',
             'ips->ip'           => 'ips',
         ]);
     }
 
-    public function hostUpdate($row)
+    public function hostUpdate(array $row) : array
     {
-        $old = $row['hosts'][$row['host']];
-        for ($i = 0; $i < count($old) - 1; $i++) {
-            $res[] = $this->post_orderid('domains/delete-cns-ip', [
-                'host' => $row['host'],
-                'ips' => [ $old[$i] ],
-                'id' => $row['id'],
-                'domain' => $row['domain'],
-            ], [
-                'host->cns'         => 'ns',
-                'ips->ip'           => 'ips',
-            ]);
+        $old = $row['cur-ips'];
+
+        $oldIP = array_shift($old);
+        $newIP = array_shift($row['ips']);
+
+        if (!empty($old)) {
+            $this->_hostDelete($row, $old);
         }
 
-        $change = $old[count($old) - 1];
-        for ($i = 0; $i < count($row['ips']); $i++) {
-            $data = [
-                'id' => $row['id'],
-                'domain' => $row['domain'],
-                'ips' => $row['ips'][$i],
-                'host' => $row['host'],
-            ];
-
-            if ($data['ips'] === $change) {
-                continue;
-            }
-
-            if ($i > 0) {
-                $res[] = $this->hostCreate($data);
-                continue;
-            }
-
-
-            $data['old-ip'] = [ $change ];
-
-            $res[] = $this->post_orderid('domains/modify-cns-ip', $data, [
+        if ($oldIP !== $newIP) {
+            $this->post_orderid('domains/modify-cns-ip', $data, [
                 'host->cns'         => 'ns',
                 'ips->new-ip'       => 'ips',
                 'old-ip->old-ip'    => 'ips',
             ]);
         }
 
+        if (!empty($row['ips'])) {
+            $this->hostCreate($row);
+        }
+
         return $row;
+    }
+
+    public function hostDelete(array $row) : array
+    {
+        $data = $this->hostInfo($row);
+        $old = $data['ips'];
+        $res = $this->_hostDelete($row, $old);
+
+        return $row;
+    }
+
+    public function hostsDelete(array $rows) : array
+    {
+        foreach ($rows as $id => $row) {
+            try {
+                $res[$id] = $this->hostDelete($row);
+            } catch (DirectiException $e) {
+                $res[$id] = err::set($row, $e->getMessage());
+            }
+        }
+
+        return err::reduce($res);
+    }
+
+    protected function _hostInfo(array $row)
+    {
+        if (empty($row['domain'])) {
+            throw new DirectiException(self::REQUIRED_PARAMETR_MISSING);
+        }
+
+        $r = $this->tool->domainInfo($row);
+        $exists = isset($r['hosts'][$row['host']]);
+
+        if ($exists === false) {
+            return array_merge($row, [
+                'exists' => 0,
+            ]);
+        }
+
+        return array_merge($row, [
+            'cur-ips' => $r['hosts'][$row['host']],
+            'exists' => 1,
+        ]);
+    }
+
+    protected function _hostDelete(array $row, $ips) : array
+    {
+        return $this->post_orderid(
+            'domains/delete-cns-ip',
+            $this->_prepareHostData($row, $ips),
+            [
+                'host->cns'         => 'ns',
+                'ips->ip'           => 'ips',
+            ]
+        );
+    }
+
+    protected function _prepareHostData(array $row, $ips) : array
+    {
+        return [
+            'host' => $row['host'],
+            'ips' => $ips,
+            'id' => $row['id'],
+            'domain' => $row['domain'],
+        ];
     }
 }
