@@ -25,16 +25,15 @@ use hiapi\directi\exceptions\DirectiException;
 class DomainModule extends AbstractModule
 {
     /** @const state */
-    const STATE_OK = 'ok';
     const STATE_DELETING = 'deleting';
 
     /** const error messages */
-    const OBJECT_DOES_NOT_EXIST = 'Object does not exist';
     const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
     const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
     const ACTION_IN_ORDER_ERROR = 'You have already added this action on this order.';
     const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
     const WHOIS_PROTECT_NOT_PURCHASED = 'Privacy Protection not Purchased';
+    const REGISTRAR_ERROR = 'You are not allowed to perform this action';
 
     /**
      * @var array
@@ -127,7 +126,22 @@ class DomainModule extends AbstractModule
         $res['expiration_date'] = format::datetime($data['endtime'],'iso');
         $res['statuses_arr'] = $this->_fixStatuses($data);
         $res['statuses'] = arr::cjoin($res['statuses_arr']);
-        $res['hosts'] = $data['cns'];
+        $res['cns'] = $data['cns'];
+        if ($res['cns']) {
+            $res['hosts'] = array_keys($res['cns']);
+            // foreach ($res['cns'] as $host => $ips) {
+            //     $res['hosts'][$host] = [
+            //         'host' => $host,
+            //         'ips' => $ips,
+            //     ];
+            // }
+        }
+        foreach (['registrant', 'admin', 'tech', 'billing'] as $cType) {
+            $res["{$cType}c"] = $this->tool->contactParse(array_merge($data["{$cType}contact"], [
+                'entityid' => $data["{$cType}contactid"],
+            ]));
+        }
+
         if ($data['privacyprotectendtime']) {
             $res['wp_purchased'] = (int) $data['privacyprotectendtime'] >= time();
         }
@@ -311,25 +325,7 @@ class DomainModule extends AbstractModule
             }
         }
 
-        try {
-            $res = $this->post_orderid('domains/modify-contact', $row, [
-                'registrant_remoteid->reg-contact-id'   => 'id',
-                'admin_remoteid->admin-contact-id'      => 'id',
-                'tech_remoteid->tech-contact-id'        => 'id',
-                'billing_remoteid->billing-contact-id'  => 'id',
-            ],[
-                'entityid->id'          => 'id',
-                'description->domain'   => 'domain',
-            ]);
-        } catch (DirectiException $e) {
-            if (in_array($e->getMessage(), [self::SAME_CONTACTS_ERROR, self::ACTION_PENDING_ERROR], true)) {
-                return arr::mget($row,'id,domain');
-            }
-
-            throw new DirectiException($e->getMessage());
-        }
-
-        return $res;
+        return $this->_domainSetContacts($row, true);
     }
 
     public function domainEnableLock($row)
@@ -447,6 +443,83 @@ class DomainModule extends AbstractModule
         }
 
         return err::reduce($res);
+    }
+
+    public function domainsMoveDirecti($rows)
+    {
+        foreach ($rows as $id => $row)
+        {
+            $res[$id] = $this->domainMoveDirecti($row);
+        }
+
+        return $res;
+    }
+
+    public function domainVerificationDirecti($row)
+    {
+        var_dump($this->post_orderid('domains/raa/skip-verification', $row, [
+
+        ]));
+
+    }
+
+    public function domainsSetVerificationDirecti($rows)
+    {
+        foreach ($rows as $id => $row) {
+            try {
+                $res = $this->domainSetVerificationDirecti($row);
+            } catch (\DirectiException $e) {
+                $res[$id] = err::set($row, $e->getMessage());
+            }
+        }
+
+        return $res;
+    }
+
+    public function domainMoveDirecti($row)
+    {
+        $info = $this->tool->domainInfo([
+            'domain' => $row['domain'],
+        ]);
+        $row['existing-customer-id'] = $info['customer'] ?? $this->tool->getCustomerId();
+        $row['default-contact'] = 'oldcontact';
+        return $this->post('products/move', $row, [
+            'domain->domain-name' => 'domain',
+            'new_customer_id->new-customer-id' => 'id',
+            'existing-customer-id' => 'id',
+            'default-contact' => 'ref',
+        ]);
+    }
+
+    protected function _domainSetContacts($row, $skipIRTP = false)
+    {
+        try {
+            $res = $this->post_orderid('domains/modify-contact', array_merge($row, $skipIRTP ? [
+                'attr-name1' => 'skipIRTP',
+                'attr-value1' => 'true',
+            ] : []), [
+                'registrant_remoteid->reg-contact-id'   => 'id',
+                'admin_remoteid->admin-contact-id'      => 'id',
+                'tech_remoteid->tech-contact-id'        => 'id',
+                'billing_remoteid->billing-contact-id'  => 'id',
+                'attr-name1'                            => 'label',
+                'attr-value1'                           => 'label',
+            ],[
+                'entityid->id'          => 'id',
+                'description->domain'   => 'domain',
+            ]);
+        } catch (DirectiException $e) {
+            if ($e->getMessage() === self::REGISTRAR_ERROR) {
+                return $this->_domainSetContacts($row);
+            }
+            if (in_array($e->getMessage(), [self::SAME_CONTACTS_ERROR, self::ACTION_PENDING_ERROR], true)) {
+                return arr::mget($row,'id,domain');
+            }
+
+            throw new DirectiException($e->getMessage());
+        }
+
+        return $res;
     }
 
     protected function _fixStatuses($data)

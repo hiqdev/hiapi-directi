@@ -97,7 +97,7 @@ class HostModule extends AbstractModule
         }
 
         $r = $this->tool->domainInfo($row);
-        $exists = isset($r['hosts'][$row['host']]);
+        $exists = isset($r['cns'][$row['host']]);
 
         if ($exists === false) {
             return array_merge($row, [
@@ -106,7 +106,7 @@ class HostModule extends AbstractModule
         }
 
         return array_merge($row, [
-            'cur-ips' => $r['hosts'][$row['host']],
+            'cur-ips' => $r['cns'][$row['host']],
             'exists' => 1,
         ]);
     }
