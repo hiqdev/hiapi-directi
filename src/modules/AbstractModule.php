@@ -20,6 +20,12 @@ use hiapi\directi\DirectiTool;
  */
 class AbstractModule
 {
+    /** @const state */
+    const STATE_OK = 'ok';
+
+    const OBJECT_DOES_NOT_EXIST = 'Object does not exist';
+    const REQUIRED_PARAMETR_MISSING = 'Required parametr missing';
+
     public $tool;
     public $base;
 

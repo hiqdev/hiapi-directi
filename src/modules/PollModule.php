@@ -47,7 +47,7 @@ class PollModule extends AbstractModule
         foreach ($domains as $id => $domain) {
             $info = $this->base->domainInfo($domain);
 
-            if (err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false) {
+            if (err::is($info) && strpos(err::get($info), self::OBJECT_DOES_NOT_EXIST) !== false) {
                 $polls[] = $this->_pollBuild($domain, [
                     'type' => 'clientRejected',
                     'message' => 'Transfer rejected',
@@ -56,7 +56,7 @@ class PollModule extends AbstractModule
                 continue;
             }
 
-            if (!empty($info['statuses_arr'][DomainModule::STATE_OK])) {
+            if (!empty($info['statuses_arr'][self::STATE_OK])) {
                 $polls[] = $this->_pollBuild($domain, [
                     'type' => 'serverApproved',
                     'message' => 'Transfer completed',
@@ -76,7 +76,7 @@ class PollModule extends AbstractModule
         foreach ($domains as $id => $domain) {
             $info = $this->base->domainInfo($domain);
 
-            if (err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false) {
+            if (err::is($info) && strpos(err::get($info), self::OBJECT_DOES_NOT_EXIST) !== false) {
                 $polls[] = $this->_pollBuild($domain, [
                     'type' => 'serverApproved',
                     'message' => 'Transfer approved',
@@ -95,7 +95,7 @@ class PollModule extends AbstractModule
 
         foreach ($domains as $domain) {
             $info = $this->base->domainInfo($domain);
-            $error = err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false;
+            $error = err::is($info) && strpos(err::get($info), self::OBJECT_DOES_NOT_EXIST) !== false;
             if ($error || strpos($info['statuses'], 'pendingDelete') !== false) {
                 $this->_setState($domain, DomainModule::STATE_DELETING);
             }
@@ -116,7 +116,7 @@ class PollModule extends AbstractModule
 
         foreach ($domains as $id => $domain) {
             $info = $this->base->domainInfo($domain);
-            if (err::is($info) && strpos(err::get($info), DomainModule::OBJECT_DOES_NOT_EXIST) !== false) {
+            if (err::is($info) && strpos(err::get($info), self::OBJECT_DOES_NOT_EXIST) !== false) {
                 $polls[] = $this->_pollSetDeletedMessage($domain);
             }
         }
