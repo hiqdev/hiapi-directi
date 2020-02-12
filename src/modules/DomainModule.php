@@ -479,7 +479,7 @@ class DomainModule extends AbstractModule
     public function domainMoveDirecti($row)
     {
         $info = $this->tool->domainInfo([
-            'domain' => $row['domain'],
+            'domain' => $row['name'],
         ]);
         $row['existing-customer-id'] = $info['customer'] ?? $this->tool->getCustomerId();
         $row['default-contact'] = 'oldcontact';
