@@ -141,7 +141,8 @@ class PollModule extends AbstractModule
     {
         return array_merge([
             'class' => 'domain',
-            'name' => $row['domain'],
+            'name' => $row['name'],
+            'object_id' => $row['id'],
             'request_client' => $this->tool->data['name'],
             'request_date' => date("Y-m-d H:i:s"),
             'action_date' => date("Y-m-d H:i:s"),
