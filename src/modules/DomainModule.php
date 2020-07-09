@@ -187,10 +187,11 @@ class DomainModule extends AbstractModule
      */
     public function domainPrepareContacts(array $row): array
     {
-        $contacts = $this->base->domainGetContactsInfo($row);
+        $contacts = $this->_domainGetContactsInfo($row);
         if (err::is($contacts)) {
             return $contacts;
         }
+
         $rids = [];
         foreach ($this->base->getContactTypes() as $t) {
             $cid = $contacts[$t]['id'];
@@ -552,5 +553,12 @@ class DomainModule extends AbstractModule
     protected function _isWPNeadSet(array $data, bool $enable) : bool
     {
         return $data['wp_enabled'] != $enable;
+    }
+
+    private function _domainGetContactsInfo(array $row): array
+    {
+        $rows = $this->base->_domainsGetContactsInfo([$row['id'] => $row]);
+
+        return err::is($rows) ? $rows : reset($rows);
     }
 }
