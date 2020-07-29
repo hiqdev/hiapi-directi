@@ -54,7 +54,10 @@ class HostModule extends AbstractModule
         }
 
         if ($oldIP !== $newIP) {
-            $this->post_orderid('domains/modify-cns-ip', $data, [
+            $this->post_orderid('domains/modify-cns-ip', array_merge($row, [
+                'ips' => $newIP,
+                'old-ip' => $oldIP,
+            ]), [
                 'host->cns'         => 'ns',
                 'ips->new-ip'       => 'ips',
                 'old-ip->old-ip'    => 'ips',
