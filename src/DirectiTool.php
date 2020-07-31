@@ -13,6 +13,7 @@ namespace hiapi\directi;
 use hiapi\directi\modules\AbstractModule;
 use hiapi\directi\modules\ContactModule;
 use hiapi\directi\modules\DomainModule;
+use hiapi\directi\modules\SecDNSModule;
 use hiapi\directi\modules\HostModule;
 use hiapi\directi\modules\PollModule;
 use hiapi\legacy\lib\deps\err;
@@ -78,6 +79,8 @@ class DirectiTool extends \hiapi\components\AbstractTool
     protected $modules = [
         'domain'    => DomainModule::class,
         'domains'   => DomainModule::class,
+        'secdns'    => SecDNSModule::class,
+        'secdnss'   => SecDNSModule::class,
         'contact'   => ContactModule::class,
         'contacts'  => ContactModule::class,
         'host'      => HostModule::class,
