@@ -405,6 +405,23 @@ class DomainModule extends AbstractModule
         return $row;
     }
 
+    public function domainRestore(array $row)
+    {
+        $domain = $this->domainGetId($row);
+        if (err::is($domain)) {
+            return err::set($domain, 'Failed to get domain: ' . err::get($domain));
+        }
+
+        $row['order-id'] = $domain['id'];
+        $res = $this->post('domains/restore', $row, [
+            'order-id'       => 'id',
+        ], null, [
+            'invoice-option'    => 'NoInvoice',
+        ]);
+
+        return $row;
+    }
+
     public function domainEnableWhoisProtect($row)
     {
         return $this->domainSetWhoisProtect($row, true);
