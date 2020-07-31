@@ -84,7 +84,14 @@ class DomainModule extends AbstractModule
             'tlds'        => $row['tlds']
         ]);
         foreach ($res as $domain => $check) {
-            $res[$domain] = $check['status'] === 'available' ? 1 : 0;
+            $res[$domain]['avail'] = $check['status'] === 'available' ? 1 : 0;
+            $checkPremium = $this->get('domains/premium-check', [
+                'domain-name' => $row['domain-name'],
+            ]);
+            $res[$domain]['premium'] = $checkPremium['premium'];
+            if ($checkPremium['premium']) {
+                $res[$domain]['fee'] = $checkPremium;
+            }
         }
 
         return $res;
@@ -381,6 +388,38 @@ class DomainModule extends AbstractModule
     public function domainSaveContacts($row)
     {
         return $this->base->_simple_domainSaveContacts($row, false);
+    }
+
+    public function domainDelete(array $row)
+    {
+        $domain = $this->domainGetId($row);
+        if (err::is($domain)) {
+            return err::set($domain, 'Failed to get domain: ' . err::get($domain));
+        }
+        $row['order-id'] = $domain['id'];
+
+        $res = $this->post('domains/delete', $row, [
+            'order-id'       => 'id',
+        ]);
+
+        return $row;
+    }
+
+    public function domainRestore(array $row)
+    {
+        $domain = $this->domainGetId($row);
+        if (err::is($domain)) {
+            return err::set($domain, 'Failed to get domain: ' . err::get($domain));
+        }
+
+        $row['order-id'] = $domain['id'];
+        $res = $this->post('domains/restore', $row, [
+            'order-id'       => 'id',
+        ], null, [
+            'invoice-option'    => 'NoInvoice',
+        ]);
+
+        return $row;
     }
 
     public function domainEnableWhoisProtect($row)
