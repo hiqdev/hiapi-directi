@@ -42,6 +42,7 @@ class DomainModule extends AbstractModule
         'Active' => 'ok',
         'transferlock' => 'clientTransferProhibited',
         'renewhold' => 'autoRenewPeriod',
+        'resellersuspend' => 'clientHold',
         'Pending Delete Restorable' => 'redemptionPeriod,pendingDelete',
         // TODO Add all statuses
     ];
