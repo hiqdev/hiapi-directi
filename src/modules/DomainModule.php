@@ -34,6 +34,7 @@ class DomainModule extends AbstractModule
     const WHOIS_PROTECT_SERVICE_ERROR = 'Privacy Protection Service not available.';
     const WHOIS_PROTECT_NOT_PURCHASED = 'Privacy Protection not Purchased';
     const REGISTRAR_ERROR = 'You are not allowed to perform this action';
+    const SIGN_FOR_PREMIUM_DOMAIN = 'Not Signed up for Premium Domains';
 
     /**
      * @var array
@@ -86,9 +87,18 @@ class DomainModule extends AbstractModule
         ]);
         foreach ($res as $domain => $check) {
             $res[$domain]['avail'] = $check['status'] === 'available' ? 1 : 0;
-            $checkPremium = $this->get('domains/premium-check', [
-                'domain-name' => $row['domain-name'],
-            ]);
+            if ($check['status'] !== 'available') {
+                continue ;
+            }
+            try {
+                $checkPremium = $this->get('domains/premium-check', [
+                    'domain-name' => $domain,
+                ]);
+            } catch (\Throwable $e) {
+                if ($e->getMessage() === self::SIGN_FOR_PREMIUM_DOMAIN) {
+                    continue ;
+                }
+            }
             $res[$domain]['premium'] = $checkPremium['premium'];
             if ($checkPremium['premium']) {
                 $res[$domain]['fee'] = $checkPremium;
