@@ -140,8 +140,8 @@ class DomainModule extends AbstractModule
             'customerid->customer'              => 'id',
 
         ], $data);
-        $res['created_date'] = format::datetime($data['creationtime'],'iso');
-        $res['expiration_date'] = format::datetime($data['endtime'],'iso');
+        $res['created_date'] = isset($data['creationtime']) ? format::datetime($data['creationtime'],'iso') : null;
+        $res['expiration_date'] = isset($data['endtime']) ? format::datetime($data['endtime'],'iso') : null;
         $res['statuses_arr'] = $this->_fixStatuses($data);
         $res['statuses'] = arr::cjoin($res['statuses_arr']);
         $res['cns'] = $data['cns'];
@@ -160,17 +160,17 @@ class DomainModule extends AbstractModule
             ]));
         }
 
-        if ($data['privacyprotectendtime']) {
+        if (isset($data['privacyprotectendtime'])) {
             $res['wp_purchased'] = (int) $data['privacyprotectendtime'] >= time();
         }
 
-        $res['wp_enabled'] = $data['isprivacyprotected'] === 'true';
+        $res['wp_enabled'] = isset($data['isprivacyprotected']) && $data['isprivacyprotected'] === 'true';
         for ($i=1; $i <= 13; ++$i) {
-            if ($data["ns$i"]) {
+            if (isset($data["ns$i"])) {
                 $nss[] = $data["ns$i"];
             }
         }
-        if ($nss) {
+        if (isset($nss)) {
             $res['nameservers'] = arr::cjoin($nss);
         }
         return $res;
