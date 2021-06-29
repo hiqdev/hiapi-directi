@@ -594,8 +594,10 @@ class DomainModule extends AbstractModule
 
     protected function _isWPNeadPurchase(array $data, bool $enable) : bool
     {
-        $neadEnable = !$data['wp_purchased'] && $enable;
-        $neadDisable = $data['wp_enabled'] && !($data['wp_purchased'] || $enable);
+        $wpEnabled = $data['wp_enabled'] ?? false;
+        $wpPurchased = $data['wp_purchased'] ?? false;
+        $neadEnable = !$wpPurchased && $enable;
+        $neadDisable = $wpEnabled && !($wpPurchased || $enable);
 
         return $neadEnable || $neadDisable;
     }
