@@ -27,6 +27,9 @@ class DomainModule extends AbstractModule
     /** @const state */
     const STATE_DELETING = 'deleting';
 
+    /** @const premium */
+    const REASON_PREMIUM_DOMAIN = 'PREMIUM DOMAIN';
+
     /** const error messages */
     const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
     const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
@@ -35,6 +38,7 @@ class DomainModule extends AbstractModule
     const WHOIS_PROTECT_NOT_PURCHASED = 'Privacy Protection not Purchased';
     const REGISTRAR_ERROR = 'You are not allowed to perform this action';
     const SIGN_FOR_PREMIUM_DOMAIN = 'Not Signed up for Premium Domains';
+    const PREMIUM_DOMAINS_NOT_SUPPORTED = 'Premium Domains not supported';
 
     /**
      * @var array
@@ -95,13 +99,30 @@ class DomainModule extends AbstractModule
                     'domain-name' => $domain,
                 ]);
             } catch (\Throwable $e) {
-                if ($e->getMessage() === self::SIGN_FOR_PREMIUM_DOMAIN) {
+                if (in_array($e->getMessage(), [self::PREMIUM_DOMAINS_NOT_SUPPORTED, self::SIGN_FOR_PREMIUM_DOMAIN], true)) {
+                    list($name, $tld) = explode('.', $domain, 2);
+                    if (strlen($name) < 4) {
+                        $res[$domain] = [
+                            'avail' => $res[$domain]['avail'],
+                            'fee' => [
+                                'premium' => 1,
+                                'reason' => self::REASON_PREMIUM_DOMAIN,
+                            ],
+                        ];
+                    }
+
                     continue ;
                 }
             }
-            $res[$domain]['premium'] = $checkPremium['premium'];
-            if ($checkPremium['premium']) {
-                $res[$domain]['fee'] = $checkPremium;
+
+            if ($checkPremium['premium'] === 'true') {
+                $res[$domain]['fee'] = array_merge([
+                    'premium' => 1,
+                    'unit' => 'y',
+                    'period' => '1',
+                    'reason' => self::REASON_PREMIUM_DOMAIN,
+                    'currency' => $checkPremium['costHash']['sellingCurrencySymbol'],
+                ], $checkPremium['costHash']);
             }
         }
 
