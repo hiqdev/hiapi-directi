@@ -104,6 +104,4 @@ class AbstractModule
 
         return err::is($id) ? $id : compact('id');
     }
-
-
 }

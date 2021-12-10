@@ -144,10 +144,8 @@ class DomainModule extends AbstractModule
             if (strpos($e->getMessage(), "Website doesn't exist for {$row['domain']}") !== false) {
                 throw new DirectiException(self::OBJECT_DOES_NOT_EXIST);
             }
-        }
-
-        if (err::is($data)) {
-            return $data;
+        } catch (\Throwable $e) {
+            throw new \Exception($e->getMessage());
         }
 
         $res = fix::values([
@@ -179,6 +177,9 @@ class DomainModule extends AbstractModule
             $res["{$cType}c"] = $this->tool->contactParse(array_merge($data["{$cType}contact"], [
                 'entityid' => $data["{$cType}contactid"],
             ]));
+
+            $res['contact'] = $res['contact'] ?? $res["{$cType}c"];
+            unset($res['contact']['id']);
         }
 
         if (isset($data['privacyprotectendtime'])) {
@@ -565,6 +566,7 @@ class DomainModule extends AbstractModule
 
     protected function _domainSetContacts($row, $skipIRTP = false)
     {
+        $this->_domainSetNexus($row);
         try {
             $res = $this->post_orderid('domains/modify-contact', array_merge($row, $skipIRTP ? [
                 'attr-name1' => 'skipIRTP',
@@ -633,5 +635,38 @@ class DomainModule extends AbstractModule
         $rows = $this->base->_domainsGetContactsInfo([$row['id'] => $row]);
 
         return err::is($rows) ? $rows : reset($rows);
+    }
+
+    private function _domainSetNexus(array $row): array
+    {
+        if (!preg_match('/us$/', $row['domain'])) {
+            return $row;
+        }
+
+        $saved = [];
+        foreach (['registrant', 'admin', 'tech', 'billing'] as $key) {
+            $k = "{$key}_remoteid";
+            if (empty($row[$k])) {
+                continue;
+            }
+
+            if (!empty($saved[$row[$k]])) {
+                continue;
+            }
+            $saved[$row[$k]] = true;
+            try {
+                $this->post_orderid('contacts/set-details', [
+                    'contact-id' => $row[$k],
+                    'attr-name1' => 'purpose',
+                    'attr-value1' => 'P1',
+                    'attr-name2' => 'category',
+                    'attr-value2' => 'C32',
+                ], [], [
+                ]);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return $row;
     }
 }
