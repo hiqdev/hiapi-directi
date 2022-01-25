@@ -27,6 +27,9 @@ class DomainModule extends AbstractModule
     /** @const state */
     const STATE_DELETING = 'deleting';
 
+    /** @const premium */
+    const REASON_PREMIUM_DOMAIN = 'PREMIUM DOMAIN';
+
     /** const error messages */
     const SAME_CONTACTS_ERROR = 'The Contacts selected are the same as the existing contacts';
     const ACTION_PENDING_ERROR = 'There is already a pending action on this domain';
@@ -35,6 +38,7 @@ class DomainModule extends AbstractModule
     const WHOIS_PROTECT_NOT_PURCHASED = 'Privacy Protection not Purchased';
     const REGISTRAR_ERROR = 'You are not allowed to perform this action';
     const SIGN_FOR_PREMIUM_DOMAIN = 'Not Signed up for Premium Domains';
+    const PREMIUM_DOMAINS_NOT_SUPPORTED = 'Premium Domains not supported';
 
     /**
      * @var array
@@ -95,13 +99,30 @@ class DomainModule extends AbstractModule
                     'domain-name' => $domain,
                 ]);
             } catch (\Throwable $e) {
-                if ($e->getMessage() === self::SIGN_FOR_PREMIUM_DOMAIN) {
+                if (in_array($e->getMessage(), [self::PREMIUM_DOMAINS_NOT_SUPPORTED, self::SIGN_FOR_PREMIUM_DOMAIN], true)) {
+                    list($name, $tld) = explode('.', $domain, 2);
+                    if (strlen($name) < 4) {
+                        $res[$domain] = [
+                            'avail' => $res[$domain]['avail'],
+                            'fee' => [
+                                'premium' => 1,
+                                'reason' => self::REASON_PREMIUM_DOMAIN,
+                            ],
+                        ];
+                    }
+
                     continue ;
                 }
             }
-            $res[$domain]['premium'] = $checkPremium['premium'];
-            if ($checkPremium['premium']) {
-                $res[$domain]['fee'] = $checkPremium;
+
+            if ($checkPremium['premium'] === 'true') {
+                $res[$domain]['fee'] = array_merge([
+                    'premium' => 1,
+                    'unit' => 'y',
+                    'period' => '1',
+                    'reason' => self::REASON_PREMIUM_DOMAIN,
+                    'currency' => $checkPremium['costHash']['sellingCurrencySymbol'],
+                ], $checkPremium['costHash']);
             }
         }
 
@@ -123,10 +144,8 @@ class DomainModule extends AbstractModule
             if (strpos($e->getMessage(), "Website doesn't exist for {$row['domain']}") !== false) {
                 throw new DirectiException(self::OBJECT_DOES_NOT_EXIST);
             }
-        }
-
-        if (err::is($data)) {
-            return $data;
+        } catch (\Throwable $e) {
+            throw new \Exception($e->getMessage());
         }
 
         $res = fix::values([
@@ -158,6 +177,9 @@ class DomainModule extends AbstractModule
             $res["{$cType}c"] = $this->tool->contactParse(array_merge($data["{$cType}contact"], [
                 'entityid' => $data["{$cType}contactid"],
             ]));
+
+            $res['contact'] = $res['contact'] ?? $res["{$cType}c"];
+            unset($res['contact']['id']);
         }
 
         if (isset($data['privacyprotectendtime'])) {
@@ -210,12 +232,18 @@ class DomainModule extends AbstractModule
             return $contacts;
         }
 
+        if (preg_match('/us$/', $row['domain'])) {
+            $productKey = 'domus';
+        };
+
         $rids = [];
         foreach ($this->base->getContactTypes() as $t) {
             $cid = $contacts[$t]['id'];
             $remoteid = $rids[$cid];
             if (!$remoteid) {
-                $r = $this->tool->contactSet($contacts[$t]);
+                $r = $this->tool->contactSet(array_merge($contacts[$t], [
+                    'product-key' => $productKey ?? null,
+                ]));
                 if (err::is($r)) {
                     return $r;
                 }
@@ -237,15 +265,19 @@ class DomainModule extends AbstractModule
         if (!$row['nss']) {
             $row['nss'] = arr::get($this->base->domainGetNSs($row),'nss');
         }
+
         if (!$row['nss']) {
             $row['nss'] = $this->tool->getDefaultNss();
         }
+
         $row = $this->domainPrepareContacts($row);
         if (err::is($row)) {
             return $row;
         }
 
-        $res = $this->post('domains/register', $row , [
+        $this->_domainSetNexus($row);
+
+        return $this->post('domains/register', $row , [
             'domain->domain-name'                   => 'domain',
             'period->years'                         => 'period',
             'nss->ns'                               => 'nss',
@@ -262,8 +294,6 @@ class DomainModule extends AbstractModule
             'invoice-option'    => 'NoInvoice',
             'protect-privacy'   => 'false',
         ]);
-
-        return $res;
     }
 
     /**
@@ -544,6 +574,7 @@ class DomainModule extends AbstractModule
 
     protected function _domainSetContacts($row, $skipIRTP = false)
     {
+        $this->_domainSetNexus($row);
         try {
             $res = $this->post_orderid('domains/modify-contact', array_merge($row, $skipIRTP ? [
                 'attr-name1' => 'skipIRTP',
@@ -612,5 +643,41 @@ class DomainModule extends AbstractModule
         $rows = $this->base->_domainsGetContactsInfo([$row['id'] => $row]);
 
         return err::is($rows) ? $rows : reset($rows);
+    }
+
+    private function _domainSetNexus(array $row): array
+    {
+        if (!preg_match('/us$/', $row['domain'])) {
+            return $row;
+        }
+
+        $saved = [];
+        foreach (['registrant', 'admin', 'tech', 'billing'] as $key) {
+            $k = "{$key}_remoteid";
+            if (empty($row[$k])) {
+                continue;
+            }
+
+            if (!empty($saved[$row[$k]])) {
+                continue;
+            }
+            $saved[$row[$k]] = true;
+            try {
+                $this->post('contacts/set-details', [], [
+                ], [
+                ], [
+                    'customer-id' => $this->tool->getCustomerId(),
+                    'contact-id' => $row[$k],
+                    'product-key' => 'domus',
+                    'attr-name1' => 'purpose',
+                    'attr-value1' => 'P1',
+                    'attr-name2' => 'category',
+                    'attr-value2' => 'C32',
+                ]);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return $row;
     }
 }
