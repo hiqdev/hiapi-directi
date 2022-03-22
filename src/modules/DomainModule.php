@@ -85,10 +85,14 @@ class DomainModule extends AbstractModule
     public function domainsCheck(array $row): array
     {
         $row = $this->prepareDomainsData($row);
-        $res = $this->get('domains/available', [
-            'domain-name' => $row['domain-name'],
-            'tlds'        => $row['tlds']
-        ]);
+        try {
+            $res = $this->get('domains/available', [
+                'domain-name' => $row['domain-name'],
+                'tlds'        => $row['tlds']
+            ]);
+        } catch (DirectiException $e) {
+            throw new DirectiException($e->getMessage(), $e->getCode(), $e);
+        }
         foreach ($res as $domain => $check) {
             $res[$domain]['avail'] = $check['status'] === 'available' ? 1 : 0;
             if ($check['status'] !== 'available') {
@@ -303,7 +307,7 @@ class DomainModule extends AbstractModule
     public function domainTransfer(array $row): array
     {
         $row = $this->domainPrepareContacts($row);
-        $res = $this->post('domains/transfer',$row,[
+        $res = $this->post('domains/transfer', $row, [
             'domain->domain-name'                   => 'domain',
             'password->auth-code'                   => 'password',
             'nss->ns'                               => 'nss',
@@ -439,9 +443,22 @@ class DomainModule extends AbstractModule
         }
         $row['order-id'] = $domain['id'];
 
-        $res = $this->post('domains/delete', $row, [
-            'order-id'       => 'id',
-        ]);
+        try {
+            $this->post('domains/disable-theft-protection', $row, [
+                'order-id'       => 'id',
+            ]);
+        } catch (DirectiException $e) {
+        }
+
+        try {
+            $res = $this->post('domains/delete', $row, [
+                'order-id'       => 'id',
+            ]);
+        } catch (DirectiException $e) {
+            if (strpos($e->getMessage(), self::ACTION_IN_ORDER_ERROR) === false) {
+                throw new DirectiException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
 
         return $row;
     }
