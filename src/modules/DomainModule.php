@@ -663,14 +663,17 @@ class DomainModule extends AbstractModule
             }
             $saved[$row[$k]] = true;
             try {
-                $this->post_orderid('contacts/set-details', [
-                    'contact-id' => $row[$k],
-                    'attr-name1' => 'purpose',
-                    'attr-value1' => 'P1',
-                    'attr-name2' => 'category',
-                    'attr-value2' => 'C32',
-                ], [], [
-                ]);
+                $this->post('contacts/set-details', [], [                                                                                                                                                                          
+                ], [                                                                                                                                                                                                               
+                ], [                                                                                                                                                                                                               
+                    'customer-id' => $this->tool->getCustomerId(),                                                                                                                                                                 
+                    'contact-id' => $row[$k],                                                                                                                                                                                      
+                    'product-key' => 'domus',                                                                                                                                                                                      
+                    'attr-name1' => 'purpose',                                                                                                                                                                                     
+                    'attr-value1' => 'P1',                                                                                                                                                                                         
+                    'attr-name2' => 'category',                                                                                                                                                                                    
+                    'attr-value2' => 'C32',                                                                                                                                                                                        
+                ]);   
             } catch (\Throwable $e) {
             }
         }
