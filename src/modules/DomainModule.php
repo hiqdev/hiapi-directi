@@ -232,12 +232,18 @@ class DomainModule extends AbstractModule
             return $contacts;
         }
 
+        if (preg_match('/us$/', $row['domain'])) {
+            $productKey = 'domus';
+        };
+
         $rids = [];
         foreach ($this->base->getContactTypes() as $t) {
             $cid = $contacts[$t]['id'];
             $remoteid = $rids[$cid];
             if (!$remoteid) {
-                $r = $this->tool->contactSet($contacts[$t]);
+                $r = $this->tool->contactSet(array_merge($contacts[$t], [
+                    'product-key' => $productKey ?? null,
+                ]));
                 if (err::is($r)) {
                     return $r;
                 }
@@ -259,15 +265,19 @@ class DomainModule extends AbstractModule
         if (!$row['nss']) {
             $row['nss'] = arr::get($this->base->domainGetNSs($row),'nss');
         }
+
         if (!$row['nss']) {
             $row['nss'] = $this->tool->getDefaultNss();
         }
+
         $row = $this->domainPrepareContacts($row);
         if (err::is($row)) {
             return $row;
         }
 
-        $res = $this->post('domains/register', $row , [
+        $this->_domainSetNexus($row);
+
+        return $this->post('domains/register', $row , [
             'domain->domain-name'                   => 'domain',
             'period->years'                         => 'period',
             'nss->ns'                               => 'nss',
@@ -284,8 +294,6 @@ class DomainModule extends AbstractModule
             'invoice-option'    => 'NoInvoice',
             'protect-privacy'   => 'false',
         ]);
-
-        return $res;
     }
 
     /**
