@@ -67,7 +67,7 @@ class HttpClient
             }
         } catch (ServerException $e) {
             $res = $this->parseGuzzleResponse($e->getResponse());
-            throw new DirectiException($res['message']);
+            throw new DirectiException($res['message'] ?? 'Could not parse', 1, $e);
         } catch (\Throwable $e) {
             throw new HttpClientException($e->getMessage(), 1, $e);
         }
