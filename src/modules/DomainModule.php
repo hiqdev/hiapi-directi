@@ -105,7 +105,7 @@ class DomainModule extends AbstractModule
             } catch (\Throwable $e) {
                 if (in_array($e->getMessage(), [self::PREMIUM_DOMAINS_NOT_SUPPORTED, self::SIGN_FOR_PREMIUM_DOMAIN], true)) {
                     list($name, $tld) = explode('.', $domain, 2);
-                    if (strlen($name) < 3) {
+                    if (strlen($name) < 4) {
                         $res[$domain] = [
                             'avail' => $res[$domain]['avail'],
                             'fee' => [
