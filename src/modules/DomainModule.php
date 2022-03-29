@@ -307,22 +307,34 @@ class DomainModule extends AbstractModule
     public function domainTransfer(array $row): array
     {
         $row = $this->domainPrepareContacts($row);
-        $res = $this->post('domains/transfer', $row, [
-            'domain->domain-name'                   => 'domain',
-            'password->auth-code'                   => 'password',
-            'nss->ns'                               => 'nss',
-            'registrant_remoteid->reg-contact-id'   => 'id',
-            'admin_remoteid->admin-contact-id'      => 'id',
-            'tech_remoteid->tech-contact-id'        => 'id',
-            'billing_remoteid->billing-contact-id'  => 'id',
-        ],[
-            'entityid->id'          => 'id',
-            'description->domain'   => 'domain',
-        ],[
-            'customer-id'       => $this->tool->getCustomerId(),
-            'invoice-option'    => 'NoInvoice',
-            'protect-privacy'   => 'false',
-        ]);
+        try {
+            $res = $this->post('domains/transfer',$row,[
+                'domain->domain-name'                   => 'domain',
+                'password->auth-code'                   => 'password',
+                'nss->ns'                               => 'nss',
+                'registrant_remoteid->reg-contact-id'   => 'id',
+                'admin_remoteid->admin-contact-id'      => 'id',
+                'tech_remoteid->tech-contact-id'        => 'id',
+                'billing_remoteid->billing-contact-id'  => 'id',
+            ],[
+                'entityid->id'          => 'id',
+                'description->domain'   => 'domain',
+            ],[
+                'customer-id'       => $this->tool->getCustomerId(),
+                'invoice-option'    => 'NoInvoice',
+                'protect-privacy'   => 'false',
+            ]);
+        } catch (\Throwable $e) {
+            $domain = $this->domainGetId($row);
+            $row['order-id'] = $domain['id'];
+            $res = $this->post('domains/transfer/submit-auth-code', $row, [
+                'order-id'                              => 'id',
+                'password->auth-code'                   => 'password',
+            ],[
+                'entityid->id'          => 'id',
+                'description->domain'   => 'domain',
+            ]);
+        }
 
         return $res;
     }

@@ -143,10 +143,10 @@ class PollModule extends AbstractModule
             'class' => 'domain',
             'name' => $row['name'],
             'object_id' => $row['id'],
-            'request_client' => $this->tool->data['name'],
+            'request_client' => $this->tool->data['name'] ?? null,
             'request_date' => date("Y-m-d H:i:s"),
             'action_date' => date("Y-m-d H:i:s"),
-            'action_client' => $this->tool->data['name'],
+            'action_client' => $this->tool->data['name'] ?? null,
             'outgoing' => $outgoing,
         ], $data);
     }
