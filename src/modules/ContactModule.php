@@ -76,10 +76,10 @@ class ContactModule extends AbstractModule
                 'type'          => 'Contact',
                 'customer-id'   => $this->contactGetCustomerID($row),
                 'product-key'   => $row['product-key'] ?? null,
-                'attr-name1'    => $row['product-key'] ? 'purpose' : null,
-                'attr-value1'   => $row['product-key'] ? 'P1' : null,
-                'attr-name2'    => $row['product-key'] ? 'category' : null,
-                'attr-value2'   => $row['product-key'] ? 'C32' : null,
+                'attr-name1'    => !empty($row['product-key']) ? 'purpose' : null,
+                'attr-value1'   => !empty($row['product-key']) ? 'P1' : null,
+                'attr-name2'    => !empty($row['product-key']) ? 'category' : null,
+                'attr-value2'   => !empty($row['product-key']) ? 'C32' : null,
         ]));
 
         return compact('id');
