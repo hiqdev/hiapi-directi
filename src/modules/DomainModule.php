@@ -330,13 +330,34 @@ class DomainModule extends AbstractModule
             $res = $this->post('domains/transfer/submit-auth-code', $row, [
                 'order-id'                              => 'id',
                 'password->auth-code'                   => 'password',
-            ],[
-                'entityid->id'          => 'id',
-                'description->domain'   => 'domain',
             ]);
+            if (isset($res['Error']) && !empty($res['Error'])) {
+                throw new DirectiException($res['Error']);
+            }
         }
 
         return $res;
+    }
+
+    public function domainCancelTransfer(array $row): array
+    {
+        try {
+            $domain = $this->domainGetId($row);
+        } catch (DirectiException $e) {
+            if (strpos($e->getMessage(), "Website doesn't exist for {$row['domain']}") !== false) {
+                return $row;
+            }
+
+            throw new DirectiException($e->getMessage());
+        }
+
+        $row['order-id'] = $domain['id'];
+        $res = $this->post('domains/cancel-transfer', $row, [
+            'order-id'                              => 'id',
+            'password->auth-code'                   => 'password',
+        ]);
+
+        return $row;
     }
 
     /**
